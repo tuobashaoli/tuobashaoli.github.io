@@ -16,10 +16,10 @@ published: true
 #### 依赖插件：select\_to\_select2
 #### 插件作用：在issue的自定义字段中，根据某个自定义字段的值，自动填写其他自定义字段的值，这些值存在数据库中，如下数据库，当自定义字段1的值选择'便签'时，自动将686,626填写进入自定义子字段4,
 #### 数据库设计： 
-| Id | field\_selector | value | field\_selector\_by | value\_by |
-| ------ | ------ | ------ | ------ | ------ |
-| 1 | #issue\_custom\_field\_values\_1 | 便签 | #issue\_custom\_field\_values\_4 | 686,626 |
-| 2 | #issue\_custom\_field\_values\_1 | 天气 | #issue\_custom\_field\_values\_4 |  691    |
+| Id | field\_selector | value | field\_selector\_by | value\_by |  
+| ------ | ------ | ------ | ------ | ------ |  
+| 1 | #issue\_custom\_field\_values\_1 | 便签 | #issue\_custom\_field\_values\_4 | 686,626 |  
+| 2 | #issue\_custom\_field\_values\_1 | 天气 | #issue\_custom\_field\_values\_4 |  691    |  
 ####
 #### 控制器 adaption       
 #### 模型 field\_value\_relation
@@ -62,8 +62,7 @@ bundle exec ruby bin/rails console
 #### #创建控制器
 ```shell
 bundle exec ruby bin/rails generate redmine_plugin_controller field_value_adaption adaption get
-```
-####
+```  
 #### 修改控制器代码
 ```ruby
 class AdaptionController < ApplicationController
@@ -91,5 +90,31 @@ class AdaptionController < ApplicationController
 end
 ```
 
+#### 编写plugins/field_value_adaption/app/views/adaption/get.js.erb
+```ruby
+var module_value = {}
+<% @fieldsinfo.each { |key1,value1| %>
+module_value['<%= key1 %>'] = {}
+  <% value1.each { |key2,value2|  %>
+        module_value['<%= key1 %>']['<%= key2 %>']={}
+    <% value2.each { |key3,value3|  %>
+       module_value['<%= key1 %>']['<%= key2 %>']['<%= key3 %>'] = ('<%= value3 %>').split(",")
+    <% }%>
+  <% }%>
+<% } %>
+$(window).load(function() {
+  for(var key1 in module_value){
+    $(document).on("select2-selecting",key1,function(e){
+      for ( var key2 in module_value[key1]) {
+        if(e.val == key2){
+          for(var key3 in  module_value[key1][key2]){
+            $(key3).select2("val",module_value[key1][key2][key3]);
+          }
+        }
+      }
+    })
+  }
+})
 
+```
 
