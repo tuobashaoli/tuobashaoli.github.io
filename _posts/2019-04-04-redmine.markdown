@@ -90,7 +90,7 @@ class AdaptionController < ApplicationController
 end
 ```
 
-#### 编写plugins/field_value_adaption/app/views/adaption/get.js.erb
+#### 编写plugins/field\_value\_adaption/app/views/adaption/get.js.erb
 ```ruby
 var module_value = {}
 <% @fieldsinfo.each { |key1,value1| %>
@@ -118,3 +118,57 @@ $(window).load(function() {
 
 ```
 
+#### 配置路由
+```ruby
+RedmineApp::Application.routes.draw do
+get 'field_adaption_js',:to => 'adaption#get'
+end
+```
+
+#### 配置issue页面发送请求的js   plugins/field\_value\_adaption/assets/javascripts/fields\_adaption\_get.js
+```js
+$.ajax({
+  url:"/redmine/field_adaption_js",
+  dataType:"script",
+  method:"GET",
+  beforeSend: function(xhr) {
+                xhr.withCredentials = true;
+            },
+  success: function(data) {
+                },
+  error: function(xhr) {
+  }
+})
+```
+
+#### 使用hook机制，在所有载入的url包含issue的请求中调用上述js
+#### plugins/field\_value\_adaption/lib/fields\_adaption\_hook\_listener.rb
+
+```ruby
+class FieldsAdaptionHookListener < Redmine::Hook::ViewListener
+  def current_is_detail_page(context)
+      ret = context[:controller] && context[:controller].is_a?(IssuesController) && context[:request].original_url.rindex(/\/issues\/\S+/)
+  end
+
+  def view_layouts_base_html_head(context)
+      if current_is_detail_page(context)
+          javascript_include_tag('fields_adaption_get.js',:plugin => :field_value_adaption)
+      end
+  end
+end
+```
+
+#### 在init.rb中应用该hook
+```ruby
+require 'redmine'
+require_dependency 'fields_adaption_hook_listener.rb'
+
+Redmine::Plugin.register :field_value_adaption do
+  name 'Field Value Adaption plugin'
+  author 'tuobashao'
+  description 'This is a plugin for Redmine'
+  version '0.0.1'
+  url 'http://example.com/path/to/plugin'
+  author_url 'http://example.com/about'
+end
+```
