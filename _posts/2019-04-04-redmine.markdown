@@ -9,43 +9,59 @@ published: true
 
 ## redmine插件开发简介
 
-#### 最稳妥的学习应该是先看[官方文档](http://www.redmine.org/projects/redmine/wiki/Developer_Guide#Plugin-development)，官方的还给了一个具体的插件开发教程，不过如果一步不差按照教程敲代码，其实会发现还是有些问题的，需要稍稍改动。
+#### 最稳妥的学习应该是先看[官方文档](http://www.redmine.org/projects/redmine/wiki/Developer_Guide#Plugin-development)，官方还给了一个具体的插件开发教程，不过如果一步不差按照教程敲代码，其实会发现还是有些问题的，需要稍稍改动。
 #### 这里，我自己编写了一个简单的插件，基于redmine-3.4.6-passenger版本。
 ####
 #### 插件名称：field\_value\_adaption 
 #### 依赖插件：select\_to\_select2
 #### 插件作用：在issue的自定义字段中，根据某个自定义字段的值，自动填写其他自定义字段的值，这些值存在数据库中，如下数据库，当自定义字段1的值选择'便签'时，自动将686,626填写进入自定义子字段4,
 #### 数据库设计： 
-| Id | field\_selector | value | field\_selector\_by | value\_by |
-| ------ | ------ | ------ | ------ | ------ |
-| 1 | #issue\_custom\_field\_values\_1 | 便签 | #issue\_custom\_field\_values\_4 | 686,626 |
-| 2 | #issue\_custom\_field\_values\_1 | 天气 | #issue\_custom\_field\_values\_4 |  691 |
+Id | field\_selector | value | field\_selector\_by | value\_by
+ - | - | - | - | -
+1 | #issue\_custom\_field\_values\_1 | 便签 | #issue\_custom\_field\_values\_4 | 686,626
+2 | #issue\_custom\_field\_values\_1 | 天气 | #issue\_custom\_field\_values\_4 |  691
 ####
 #### 控制器 adaption       模型 field\_value\_relation
 
 #### #设置开发环境变量
-#### export RAILS\_ENV="production" 
-#### #cd $REDMINE\_ROOT 
+```shell
+export RAILS\_ENV="production" 
+```
+```shell
+cd $REDMINE\_ROOT 
+```
 #### #需要在redmine根目录下执行以下代码，默认是/usr/src/redmine
 #### #新建插件
-#### bundle exec ruby bin/rails generate redmine\_plugin field\_value\_adaption
+```shell
+bundle exec ruby bin/rails generate redmine\_plugin field\_value\_adaption
+```
 #### #新建数据库
-#### bundle exec ruby bin/rails generate redmine\_plugin\_model field\_value\_adaption field\_value\_relation field\_selector:string value:string field\_selector\_by:string value\_by:string 
+```shell
+bundle exec ruby bin/rails generate redmine\_plugin\_model field\_value\_adaption field\_value\_relation field\_selector:string value:string field\_selector\_by:string value\_by:string 
+```
 #### #迁移数据库
-#### bundle exec rake redmine:plugins:migrate
-#### #将数据库编码设置成utf-8
-#### # alter table field\_value\_relations default character set utf8;
-#### # alter table  field\_value\_relations  change field\_selector field\_selector varchar(255) character set utf8;
-#### #插入数据，可以直接在数据中插入
-#### # bundle exec ruby bin/rails console
-#### # [rails 3] rails console
-#### #>> FieldValueRelation.create(:field\_selector => "#issue\_custom\_field\_values\_2", :value =>"便签", :field\_selector\_by => "#issue\_custom\_field\_values\_4", :value\_by => "686,626")
-#### #>> FieldValueRelation.create(:field\_selector => "#issue\_custom\_field\_values\_2", :value =>"便签", :field\_selector\_by => "#issue\_custom\_field\_values\_5", :value\_by => "691")
-#### #>> FieldValueRelation.create(:field\_selector => "#issue\_custom\_field\_values\_2", :value =>"便签", :field\_selector\_by => "#issue\_custom\_field\_values\_8", :value\_by => "686,606")
-#### #>> FieldValueRelation.create(:field\_selector => "#issue\_custom\_field\_values\_2", :value =>"天气", :field\_selector\_by => "#issue\_custom\_field\_values\_4", :value\_by => "626")
-#### #>> exit
+```shell
+bundle exec rake redmine:plugins:migrate
+```
+#### #将数据库编码设置成utf-8,如果没有中文输入，则没必要修改
+```sql
+alter table field\_value\_relations default character set utf8;
+alter table  field\_value\_relations  change field\_selector field\_selector varchar(255) character set utf8;
+```
+#### #插入数据，可以直接在数据库中插入
+```shell
+bundle exec ruby bin/rails console
+[rails 3] rails console
+>> FieldValueRelation.create(:field\_selector => "#issue\_custom\_field\_values\_2", :value =>"便签", :field\_selector\_by => "#issue\_custom\_field\_values\_4", :value\_by => "686,626")
+>> FieldValueRelation.create(:field\_selector => "#issue\_custom\_field\_values\_2", :value =>"便签", :field\_selector\_by => "#issue\_custom\_field\_values\_5", :value\_by => "691")
+>> FieldValueRelation.create(:field\_selector => "#issue\_custom\_field\_values\_2", :value =>"便签", :field\_selector\_by => "#issue\_custom\_field\_values\_8", :value\_by => "686,606")
+>> FieldValueRelation.create(:field\_selector => "#issue\_custom\_field\_values\_2", :value =>"天气", :field\_selector\_by => "#issue\_custom\_field\_values\_4", :value\_by => "626")
+>> exit
+```
 #### #创建控制器
-#### bundle exec ruby bin/rails generate redmine\_plugin\_controller field\_value\_adaption adaption get
+```shell
+bundle exec ruby bin/rails generate redmine\_plugin\_controller field\_value\_adaption adaption get
+```
 ####
 #### 修改控制器代码
 ```ruby
