@@ -1,0 +1,10 @@
+---
+layout: post
+title:  "Redmine it!"
+date:   2019-04-04 15:14:18
+categories: blog
+description: it is for redmine plugin
+published: true
+---
+
+## redmine插件开发简介
