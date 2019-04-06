@@ -7,8 +7,8 @@ description: it is for shell
 published: true
 ---
 
-#### shell命令总结
-##### 一、数据流导向
+### shell命令总结
+#### 一、数据流导向
 ##### 1.标准输入   stdin   代码为0，使用&lt; 或者 &lt;&lt;
 ##### 2.标准输出   stdout  代码为1，使用&gt; 或者 &gt;&gt;
 ##### 3.标准错误输出 stderr  代码为2，使用2&gt; 或者 2&gt;&gt;
@@ -61,3 +61,28 @@ split -l 200 /etc/service
 cut -d ":" -f 1 /etc/passwd |head -n 3|xargs -n 1 id
 echo '11@22@33' |xargs -d '@' -n 1 echo
 ```
+### shell脚本
+#### 一、特殊字符变量
+##### $# 参数个数
+##### $0 执行的脚本名称
+##### $1 第一个参数
+##### $@ 参数列表
+##### $\* 以一个字符串形式列出所有参数
+##### $$ 当前shell进程的pid
+##### $? 上一个shell命令执行的返回值
+#### 二、数值运算
+```shell
+var=$(( 13 % 3))
+echo $var
+echo "123.123*55.9" |bc
+```
+#### 三、test命令
+##### test [-efd]
+##### test [-rwx]
+##### test [-eq -gt -lt -ne -ge -le]
+##### test [-nt -ot -ef]
+##### test [-zn]
+##### test [-ao !]
+##### 使用[  ]进行判断，替换test，[[  ]]里面可以使用正指表达式
+#### 四、条件和循环
+#### 略
