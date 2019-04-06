@@ -1,0 +1,14 @@
+---
+layout: post
+title:  "LVM it!"
+date:   2019-04-06 22:08:18
+categories: blog
+description: it is for LVM
+published: true
+---
+
+# 概念
+# 挂载卷
+# 增加目录容量
+# 快照区
+# 卸载
