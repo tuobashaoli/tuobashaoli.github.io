@@ -14,6 +14,9 @@ published: true
 ##### 3.标准错误输出 stderr  代码为2，使用2&gt; 或者 2&gt;&gt;
 ##### 黑洞装置：不需要的信息就输出到/dev/null
 ##### 将错误信息输出到正确信息：2>&1  或者   &> 
+```shell
+cat >hello << "eof"
+```
 #### 二、管道符及相关命令
 ##### 管道符： |  ，在管道符右边，使用减号 -  来指代管道符左边的输出，比如 
 ```shell
@@ -23,3 +26,38 @@ cat a.txt | paste - b.txt
 ##### cut -d '分割字符' -f index,index2
 ##### cut -c 8-13    #取出第8个字符到第13个字符
 ##### grep -cinv ‘搜寻的字符串’ filename #count ignore number reverse
+##### 排序命令：
+##### sort -nru  #number reverse uniq
+```shell
+cat /etc/passwd |sort -t ':' -k 3  #用冒号分割，用每行中分割后的第三个字符排序
+```
+##### uniq -ic # ignore count
+##### wc -lwm #line word 字符数
+##### 双重导向：
+##### last |tee last.list|cut -d " " -f 1
+##### 字符转换：
+##### tr '[a-z]' '[A-Z]'
+##### tr -d ':' #删除冒号
+##### col -x #将tab装换成space
+##### join [-ti12] file1 file2 #joinm默认使用空格分割，并且对比俩个文件第一个字段数据，如果相同，则将俩行数据连成一行，并且自一个字段放在第一个
+```shell
+join -t ':' /etc/passed /etc/shadow
+```
+##### paste [-d] file1 file2
+```shell
+paste /etc/passwd /etc/shadow
+paste -d "|" /etc/passwd /etc/shadow #使用竖线做分隔符
+```
+##### expand -t 10 file #用10个空格替换tab键
+##### 分割文件：
+##### split [-bl] file PREFIX
+```shell
+split -b 300k /etc/service
+split -l 200 /etc/service
+```
+##### 参数代换
+##### xargs [-0epn] command #eof print number
+```shell
+cut -d ":" -f 1 /etc/passwd |head -n 3|xargs -n 1 id
+echo '11@22@33' |xargs -d '@' -n 1 echo
+```
