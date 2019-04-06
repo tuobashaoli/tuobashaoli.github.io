@@ -1,0 +1,25 @@
+---
+layout: post
+title:  "Shell it!"
+date:   2019-04-06 11:25:18
+categories: blog
+description: it is for shell
+published: true
+---
+
+#### shell命令总结
+##### 一、数据流导向
+##### 1.标准输入   stdin   代码为0，使用&lt; 或者 &lt;&lt;
+##### 2.标准输出   stdout  代码为1，使用&gt; 或者 &gt;&gt;
+##### 3.标准错误输出 stderr  代码为2，使用2&gt; 或者 2&gt;&gt;
+##### 黑洞装置：不需要的信息就输出到/dev/null
+##### 将错误信息输出到正确信息：2>&1  或者   &> 
+#### 二、管道符及相关命令
+##### 管道符： |  ，在管道符右边，使用减号 -  来指代管道符左边的输出，比如 
+```shell
+cat a.txt | paste - b.txt
+```
+##### 截取命令：
+##### cut -d '分割字符' -f index,index2
+##### cut -c 8-13    #取出第8个字符到第13个字符
+##### grep -cinv ‘搜寻的字符串’ filename #count ignore number reverse
