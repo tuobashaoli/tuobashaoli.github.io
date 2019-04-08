@@ -17,8 +17,63 @@ published: true
 #### LV逻辑卷
 ##### 从VG中取出一部分PE组合成LV
 ![avatar](https://raw.githubusercontent.com/Guiqifeitian/Guiqifeitian.github.io/master/_images/lvm.PNG)
-# 挂载卷
-#### 
-# 增加目录容量
+# 操作流程
+##### 当硬盘插入主板后，系统会自动分配Disk，对于大于2T的盘，通常使用parted进行分区，获取partition。
+```shell
+# pv
+pvcreate /dev/sdb1
+pvcreate /dev/sdb2
+pvscan 
+pvdisplay /dev/sdb1
+# vg
+vgcreate -s 16M sdbvg /dev/sdb1
+vgextend sdbvg /dev/sdb2
+vgdisplay sdbvg
+# lv
+lvcreate -L 2G -n sdblv sdbvg
+lvscan
+lvdisplay /dev/sdbvg/sdblv
+# 增加lv容量，前提是vg中有足够的剩余容量
+lvresize -L +500M /dev/sdbvg/sdblv
+```
+##### 最后，将/dev/sdbvg/sdblv格式化，并挂载
+```shell
+mkfs.ext4 /dev/sdbvg/dev/sdblv
+mount /dev/sdbvg/sdblv /home/newdir
+```
 # 快照区
+##### 利用vg内没有被使用的PE，做LV内被使用的PE数据的备份，原理图如下
+![avatar](https://raw.githubusercontent.com/Guiqifeitian/Guiqifeitian.github.io/master/_images/snap.PNG)
+```shell
+# 观察vg内还剩余多少PE
+vgdisplay sdbvg
+# 通过lvcreate建立快照区,-l指定的是PE的数量,那么当sdblv内修改的PE超过26，则这个快照区将失效
+lvcreate -s -l 26 -n sdbsnap /dev/sdbvg/sdblv
+lvdisplay /dev/sdbvg/sdbsnap
+# 这时不需要格式化/dev/sdbvg/sdbsnap，直接挂载就能看到快照区内容,会发现和/home/newdir一样
+mount -o nouuid /dev/sdbvg/sdbsnap /home/snap
+# 恢复快照区内容到源目录
+# 如果快照区额外的容量足够大，比如说和原LV一样大，则直接将LV挂载的目录/home/newdir格式化，然后将/home/snap拷贝到/home/newdir即可
+# 反之，就要讲/home/snap先备份一份，然后格式化/home/newdir，再将备份的数据还原到/home/newdir
+tar -zcvf /home/snap.tar.gz /home/snap
+umount /home/snap
+lvremove /dev/sdbvg/sdbsnap
+umount /home/newdir
+mkfs.ext4 /dev/sdbvg/sdblv
+mount /dev/sdbvg/sdblv /home/newdir
+tar -zxcf /home/snap/tar.gz -C /home/newdir
+```
 # 卸载
+```shell
+# 卸载所有文件系统
+umount /home/snap
+umount /home/newdir
+# 移除LV
+lvremove /dev/sdbvg/sdblv
+# 关闭VG
+vgchange -a n sdbvg
+# 移除VG
+vgremove sdbvg
+# 移除PV
+pvremove /dev/sdb1 /dev/sdb2
+```
