@@ -16,7 +16,7 @@ published: true
 ##### 将许多个PV整合起来就形成一个VG
 #### LV逻辑卷
 ##### 从VG中取出一部分PE组合成LV
-![avatar](https://github.com/Guiqifeitian/Guiqifeitian.github.io/tree/master/_images/lvm.PNG)
+![avatar](https://raw.githubusercontent.com/Guiqifeitian/Guiqifeitian.github.io/master/_images/lvm.PNG)
 # 挂载卷
 #### 
 # 增加目录容量
