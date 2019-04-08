@@ -60,7 +60,8 @@ buildnodes
 ##### 动态主机配置列表
 ##### 在执行ansible命令时，使用-i参数指定该脚本即可，该脚本必须支持--list(-l)和--host(-H) + 主机ip，前者是返回所有主机及主机组信息，后者返回该主机的变量信息，返回格式都是json格式
 ##### 一个参考的脚本
-```python
+```py
+
 #!/usr/bin/env python3
 #coding:utf8
 import json
