@@ -7,7 +7,7 @@ description: it is for ansible
 published: true
 ---
 
-#一、简介
+# 一、简介
 ##### 在进行多个服务器配置管理时，为了提高效率，通过ansible达到同时管理所有节点，ansible基于python编写，由Paramiko和PyYAML俩个关键模块构建
 ##### 特点如下：
 * 没有客户端，通过ssh链接节点
