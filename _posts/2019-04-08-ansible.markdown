@@ -1,0 +1,118 @@
+---
+layout: post
+title:  "Ansible it!"
+date:   2019-04-08 15:18:18
+categories: blog
+description: it is for ansible
+published: true
+---
+
+#一、简介
+##### 在进行多个服务器配置管理时，为了提高效率，通过ansible达到同时管理所有节点，ansible基于python编写，由Paramiko和PyYAML俩个关键模块构建
+##### 特点如下：
+* 没有客户端，通过ssh链接节点
+* 不仅仅支持python，还支持多种动态语言开发模块
+* 非root账户也可使用
+* 轻量级
+* 简单易读
+* ... ...
+# 二、运行环境
+### 配置文件
+##### 查找配置文件的顺序
+1. 环境变量
+2. ./ansible.cfg
+3. ~/.ansible.cfg
+4. /etc/ansible/ansible.cfg
+##### ansible.cfg参数列表如下
++ inventory 主机列表 /etc/ansible/hosts
++ library 存放模块的目录 /usr/share/my\_modules/
++ forks 最多多少个进程同时工作 5
++ sudo\_user 默认执行命令的用户 root
++ remote\_port 远程端口 22
++ host\_key\_checking 是否检查主机秘钥,一般下发控制主机的ssh公钥到节点，从而使用无密码访问 false
++ timeout 超时间隔 10
++ log\_path 日志路径，默认不记录，只有指定路径才记录 /var/log/ansible.log
++ ... ...
+# 三、帮助工具
+```shell
+# 显示所有模块
+ansible-doc -l
+# 显示该模块用法
+ansible-doc ping
+```
+# 四、组件介绍
+### (1)inventory
+##### 静态主机配置列表
+##### /etc/ansible/hosts
+```shell
+172.29.88.100
+172.29.88.103 ansible_ssh_pass='123456'
+[buildnodes]
+172.29.88.100
+172.29.88.133
+[buildnodes:vars]
+ansible_ssh_pass='123456'
+[allnodes:children]
+buildnodes
+172.29.88.156
+```
+##### 当然，可以在ansible.cfg中指定inventory为目录，这样该目录下的文件都是可以做主机配置列表
+##### 动态主机配置列表
+##### 在执行ansible命令时，使用-i参数指定该脚本即可，该脚本必须支持--list(-l)和--host(-H) + 主机ip，前者是返回所有主机及主机组信息，后者返回该主机的变量信息，返回格式都是json格式
+##### 一个参考的脚本
+```python
+#!/usr/bin/env python3
+#coding:utf8
+import json
+import sys
+ 
+def all():
+    info_dict = {
+    "all":[
+        "10.10.0.109",
+        "10.10.0.112"]
+    }
+    print(json.dumps(info_dict,indent=4))
+ 
+def group():
+    host1 = ['10.10.0.112']
+    host2 = ['10.10.0.112','10.10.0.109']
+    group1 = 'test1'
+    group2 = 'test2'
+    hostdata = {
+        group1:{"hosts":host1},
+        group2:{"hosts":host2}
+    }
+    print(json.dumps(hostdata,indent=4))
+ 
+def host(ip):
+    info_dict = {
+        "10.10.0.112": {
+            "ansible_ssh_host":"10.10.0.112",
+            "ansible_ssh_port":22,
+            "ansible_ssh_user":"root",
+            "ansible_ssh_pass":"123457"
+        },
+        "10.10.0.109": {
+            "ansible_ssh_host":"10.10.0.109",
+            "ansible_ssh_port":22,
+            "ansible_ssh_user":"root",
+            "ansible_ssh_pass":"xxxx"
+        }
+    }
+    print(json.dumps(info_dict,indent=4))
+ 
+if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
+    group()
+elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
+    host(sys.argv[2])
+else:
+    print("Usage: %s --list or --host <hostname>" % sys.argv[0])
+    sys.exit(1)
+```
+##### 内置参数
+##### ansible\_ssh\_user
+##### ansible\_ssh\_pass
+##### ansible\_python\_interpreter
+##### ansible\_shell\_type
+### (2)Ah-Hoc命令
