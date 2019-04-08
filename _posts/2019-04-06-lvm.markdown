@@ -31,7 +31,7 @@ title: 'LVM it!'
 
 ##### 从VG中取出一部分PE组合成LV
 
-![avatar](/_images/lvm.PNG)
+![avatar](https://raw.githubusercontent.com/Guiqifeitian/Guiqifeitian.github.io/master/_images/lvm.PNG)
 
 操作流程
 ========
@@ -68,7 +68,7 @@ mount /dev/sdbvg/sdblv /home/newdir
 
 ##### 利用vg内没有被使用的PE，做LV内被使用的PE数据的备份，原理图如下
 
-![avatar](/_images/snap.PNG)
+![avatar](https://raw.githubusercontent.com/Guiqifeitian/Guiqifeitian.github.io/master/_images/snap.PNG)
 
 ~~~~ {.shell}
 # 观察vg内还剩余多少PE
