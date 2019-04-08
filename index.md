@@ -4,4 +4,3 @@
 
 layout: home
 ---
-<link type="favicon" rel="fluid-icon" href="https://raw.githubusercontent.com/Guiqifeitian/Guiqifeitian.github.io/master/_images/favicon.ico">
