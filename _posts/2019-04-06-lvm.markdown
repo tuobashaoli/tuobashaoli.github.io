@@ -1,25 +1,45 @@
 ---
-layout: post
-title:  "LVM it!"
-date:   2019-04-06 22:08:18
 categories: blog
+date: '2019-04-06 22:08:18'
 description: it is for LVM
-published: true
----
+layout: post
+published: True
+title: 'LVM it!'
+...
 
-# 概念
+-   概念
+    -   PV实体卷
+    -   PE实体块
+    -   VG卷组
+    -   LV逻辑卷
+-   快照区
+    -   利用vg内没有被使用的PE，做LV内被使用的PE数据的备份，原理图如下
+-   卸载
+
+概念
+====
+
 #### PV实体卷
+
 ##### 对于partition，一般需要将系统标识符调成8e（lvm标识符），然后通过pvcreate将该partition转成PV
+
 #### PE实体块
+
 ##### 默认值是4MB
+
 #### VG卷组
+
 ##### 将许多个PV整合起来就形成一个VG
+
 #### LV逻辑卷
+
 ##### 从VG中取出一部分PE组合成LV
+
 ![avatar](https://raw.githubusercontent.com/Guiqifeitian/Guiqifeitian.github.io/master/_images/lvm.PNG)
-# 操作流程
-##### 当硬盘插入主板后，系统会自动分配Disk，对于大于2T的盘，通常使用parted进行分区，获取partition。
-```shell
+\# 操作流程 \#\#\#\#\#
+当硬盘插入主板后，系统会自动分配Disk，对于大于2T的盘，通常使用parted进行分区，获取partition。
+
+~~~~ {.shell}
 # pv
 pvcreate /dev/sdb1
 pvcreate /dev/sdb2
@@ -35,16 +55,23 @@ lvscan
 lvdisplay /dev/sdbvg/sdblv
 # 增加lv容量，前提是vg中有足够的剩余容量
 lvresize -L +500M /dev/sdbvg/sdblv
-```
+~~~~
+
 ##### 最后，将/dev/sdbvg/sdblv格式化，并挂载
-```shell
+
+~~~~ {.shell}
 mkfs.ext4 /dev/sdbvg/dev/sdblv
 mount /dev/sdbvg/sdblv /home/newdir
-```
-# 快照区
+~~~~
+
+快照区
+======
+
 ##### 利用vg内没有被使用的PE，做LV内被使用的PE数据的备份，原理图如下
+
 ![avatar](https://raw.githubusercontent.com/Guiqifeitian/Guiqifeitian.github.io/master/_images/snap.PNG)
-```shell
+
+~~~~ {.shell}
 # 观察vg内还剩余多少PE
 vgdisplay sdbvg
 # 通过lvcreate建立快照区,-l指定的是PE的数量,那么当sdblv内修改的PE超过26，则这个快照区将失效
@@ -62,9 +89,12 @@ umount /home/newdir
 mkfs.ext4 /dev/sdbvg/sdblv
 mount /dev/sdbvg/sdblv /home/newdir
 tar -zxcf /home/snap/tar.gz -C /home/newdir
-```
-# 卸载
-```shell
+~~~~
+
+卸载
+====
+
+~~~~ {.shell}
 # 卸载所有文件系统
 umount /home/snap
 umount /home/newdir
@@ -76,4 +106,4 @@ vgchange -a n sdbvg
 vgremove sdbvg
 # 移除PV
 pvremove /dev/sdb1 /dev/sdb2
-```
+~~~~
