@@ -336,3 +336,67 @@ ansible-playbook playbook.yaml -e "@var.json"
           - name: display loops
             debug: msg="{% for i in ret.results %} {{ i.stdout }} {% endfor %}"
 ```
+
+### (4)lookups
+##### ansible支持从外部获取数据，lookups就是这样那个一种插件
+##### 1.file
+```
+---
+    - hosts: buildnodes
+      gather_facts: False
+      vars:
+          contents: "{{ lookup('file','/etc/networks') }}"
+      tasks:
+          - name: debug lookup
+            debug: msg="the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}"
+```
+##### 2.password
+```
+---
+    - hosts: buildnodes
+      gather_facts: False
+      vars:
+          contents: "{{ lookup('password','hehe') }}"
+      tasks:
+          - name: debug lookup
+            debug: msg="the contents is {{ contents }}"
+```
+##### 3.pipe
+##### 实际上就是利用python的subprocess.Popen执行shell命令
+
+```
+---
+    - hosts: buildnodes
+      gather_facts: False
+      vars:
+          contents: "{{ lookup('pipe','date +%F-%H-%M-%S') }}"
+      tasks:
+          - name: debug lookup
+            debug: msg="the contents is {{ contents }}"
+```
+
+##### 4.redisi\_kv
+
+```
+---
+    - hosts: buildnodes
+      gather_facts: False
+      vars:
+          contents: "{{ lookup('redis_kv','redis://localhost:6379,ansible') }}"
+      tasks:
+          - name: debug lookup
+            debug: msg="the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}"
+```
+
+##### 5.template
+
+```
+---
+    - hosts: buildnodes
+      gather_facts: True
+      vars:
+          contents: "{{ lookup('template','./lookups.j2') }}" #lookups.j2是一个jinja模板文件
+      tasks:
+          - name: debug lookup
+            debug: msg="the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}"
+```
