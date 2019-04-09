@@ -157,7 +157,7 @@ ansible buildnodes -m setup -a 'filter="ansible_python_version"'
 # 五、Playbook
 ### (1)基本语法
 
-```
+```yaml
 ---
 - hosts: all
     tasks:
@@ -185,7 +185,7 @@ ansible-playbook -i hosts nginx.yaml -f 3
 
 ### (2)变量与引用
 
-```
+```yaml
 ---
   - hosts: all
     gather_facts: False
@@ -217,7 +217,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 ### (3)循环
 ##### 1.标准loops
 
-```
+```yaml
 ---
     - hosts: all
       gather_facts: False
@@ -231,7 +231,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 
 ##### 2.嵌套loops
 
-```
+```yaml
 ---
     - hosts: all
       gather_facts: False
@@ -245,7 +245,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 
 ##### 3.散列loops
 
-```
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: False
@@ -265,7 +265,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 
 ##### 4.文件匹配loops
 
-```
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: False
@@ -278,7 +278,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 
 ##### 5.随机选择loops
 
-```
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: False
@@ -293,7 +293,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 
 ##### 6.条件判断loops
 
-```
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: False
@@ -308,7 +308,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 
 ##### 7.文件优先匹配loops
 
-```
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: False
@@ -322,7 +322,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 
 ##### 8.register loops
 
-```
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: False
@@ -340,7 +340,8 @@ ansible-playbook playbook.yaml -e "@var.json"
 ### (4)lookups
 ##### ansible支持从外部获取数据，lookups就是这样那个一种插件
 ##### 1.file
-```
+
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: False
@@ -351,7 +352,7 @@ ansible-playbook playbook.yaml -e "@var.json"
             debug: msg="the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}"
 ```
 ##### 2.password
-```
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: False
@@ -364,7 +365,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 ##### 3.pipe
 ##### 实际上就是利用python的subprocess.Popen执行shell命令
 
-```
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: False
@@ -377,7 +378,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 
 ##### 4.redisi\_kv
 
-```
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: False
@@ -390,7 +391,7 @@ ansible-playbook playbook.yaml -e "@var.json"
 
 ##### 5.template
 
-```
+```yaml
 ---
     - hosts: buildnodes
       gather_facts: True
