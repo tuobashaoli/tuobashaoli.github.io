@@ -205,7 +205,7 @@ ansible-playbook -i hosts nginx.yaml -f 3
         shell: hostname
         register: info
       - name: display variable
-        debug: msg="The variable is {{ info }}" #info是python字典，info['stdout']是执行的结果
+        debug: msg="{% raw %}The variable is {{ info }} {% endraw %}" #info是python字典，info['stdout']是执行的结果
 ```
 
 ```shell
@@ -223,7 +223,7 @@ ansible-playbook playbook.yaml -e "@var.json"
       gather_facts: False
       tasks:
           - name: debug loops
-            debug: msg="name -> {{ item.key }},value -> {{ item.value }}"
+            debug: msg="{% raw %}name -> {{ item.key }},value -> {{ item.value }} {% endraw %}"
             with_items:
               - {key: "one",value: "hehe"}
               - {key: "second",value: "haha"}
@@ -237,7 +237,7 @@ ansible-playbook playbook.yaml -e "@var.json"
       gather_facts: False
       tasks:
           - name: debug loops
-            debug: msg="name -> {{ item[0] }},value -> {{ item[1] }}"
+            debug: msg="{% raw %}name -> {{ item[0] }},value -> {{ item[1] }}{% endraw %}"
             with_nested:
             - ['A']
             - ['a','b','c']
@@ -259,7 +259,7 @@ ansible-playbook playbook.yaml -e "@var.json"
                   shell: sh
       tasks:
           - name: debug loops
-            debug: msg="name -> {{ item.key }},value -> {{ item.value.name }} shell -> {{ item.value.shell }}"
+            debug: msg="{% raw %}name -> {{ item.key }},value -> {{ item.value.name }} shell -> {{ item.value.shell }}{% endraw %}"
             with_dict: users
 ```
 
@@ -271,7 +271,7 @@ ansible-playbook playbook.yaml -e "@var.json"
       gather_facts: False
       tasks:
           - name: debug loops
-            debug: msg="files -> {{ item }}"
+            debug: msg="{% raw %}files -> {{ item }}{% endraw %}"
             with_fileglob:
                 - /roor/ansible/*.yaml
 ```
@@ -284,7 +284,7 @@ ansible-playbook playbook.yaml -e "@var.json"
       gather_facts: False
       tasks:
           - name: debug loops
-            debug: msg="name -> {{ item }}"
+            debug: msg="{% raw %}name -> {{ item }}{% endraw %}"
             with_random_choice:
                 - "1"
                 - "2"
@@ -314,9 +314,9 @@ ansible-playbook playbook.yaml -e "@var.json"
       gather_facts: False
       tasks:
           - name: debug loops
-            debug: msg="files -> {{ item }}"
+            debug: msg="{% raw %}files -> {{ item }}{% endraw %}"
             with_first_found:
-                - "{{ ansible_distribution }}.yaml"
+                - "{% raw %}{{ ansible_distribution }}.yaml{% endraw %}"
                 - "default.yaml"
 ```
 
@@ -328,13 +328,13 @@ ansible-playbook playbook.yaml -e "@var.json"
       gather_facts: False
       tasks:
           - name: debug loops
-            shell: "{{ item }}"
+            shell: "{% raw %}{{ item }}{% endraw %}"
             with_items:
                 - hostname
                 - uname
             register: ret
           - name: display loops
-            debug: msg="{% for i in ret.results %} {{ i.stdout }} {% endfor %}"
+            debug: msg="{% raw %}{% for i in ret.results %} {{ i.stdout }} {% endfor %}{% endraw %}"
 ```
 
 ### (4)lookups
@@ -346,10 +346,10 @@ ansible-playbook playbook.yaml -e "@var.json"
     - hosts: buildnodes
       gather_facts: False
       vars:
-          contents: "{{ lookup('file','/etc/networks') }}"
+          contents: "{% raw %}{{ lookup('file','/etc/networks') }}{% endraw %}"
       tasks:
           - name: debug lookup
-            debug: msg="the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}"
+            debug: msg="{% raw %}the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}{% endraw %}"
 ```
 ##### 2.password
 ```yaml
@@ -357,10 +357,10 @@ ansible-playbook playbook.yaml -e "@var.json"
     - hosts: buildnodes
       gather_facts: False
       vars:
-          contents: "{{ lookup('password','hehe') }}"
+          contents: "{% raw %}{{ lookup('password','hehe') }}{% endraw %}"
       tasks:
           - name: debug lookup
-            debug: msg="the contents is {{ contents }}"
+            debug: msg="{% raw %}the contents is {{ contents }}{% endraw %}"
 ```
 ##### 3.pipe
 ##### 实际上就是利用python的subprocess.Popen执行shell命令
@@ -370,10 +370,10 @@ ansible-playbook playbook.yaml -e "@var.json"
     - hosts: buildnodes
       gather_facts: False
       vars:
-          contents: "{{ lookup('pipe','date +%F-%H-%M-%S') }}"
+          contents: "{% raw %}{{ lookup('pipe','date +%F-%H-%M-%S') }}{% endraw %}"
       tasks:
           - name: debug lookup
-            debug: msg="the contents is {{ contents }}"
+            debug: msg="{% raw %}the contents is {{ contents }}{% endraw %}"
 ```
 
 ##### 4.redisi\_kv
@@ -383,10 +383,10 @@ ansible-playbook playbook.yaml -e "@var.json"
     - hosts: buildnodes
       gather_facts: False
       vars:
-          contents: "{{ lookup('redis_kv','redis://localhost:6379,ansible') }}"
+          contents: "{% raw %}{{ lookup('redis_kv','redis://localhost:6379,ansible') }}{% endraw %}"
       tasks:
           - name: debug lookup
-            debug: msg="the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}"
+            debug: msg="{% raw %}the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}{% endraw %}"
 ```
 
 ##### 5.template
@@ -396,8 +396,8 @@ ansible-playbook playbook.yaml -e "@var.json"
     - hosts: buildnodes
       gather_facts: True
       vars:
-          contents: "{{ lookup('template','./lookups.j2') }}" #lookups.j2是一个jinja模板文件
+          contents: "{% raw %}{{ lookup('template','./lookups.j2') }}{% endraw %}" #lookups.j2是一个jinja模板文件
       tasks:
           - name: debug lookup
-            debug: msg="the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}"
+            debug: msg="{% raw %}the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}{% endraw %}"
 ```
