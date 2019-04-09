@@ -19,11 +19,13 @@ published: true
 # 二、运行环境
 ### 配置文件
 ##### 查找配置文件的顺序
+
 1. 环境变量
 2. ./ansible.cfg
 3. ~/.ansible.cfg
 4. /etc/ansible/ansible.cfg
 ##### ansible.cfg参数列表如下
+
 + inventory 主机列表 /etc/ansible/hosts
 + library 存放模块的目录 /usr/share/my\_modules/
 + forks 最多多少个进程同时工作 5
@@ -118,3 +120,52 @@ else:
 ##### ansible\_python\_interpreter
 ##### ansible\_shell\_type
 ### (2)Ah-Hoc命令
+
+#### 1.后台运行
+```shell
+# 后台执行最大时间是120秒，每1秒检查一下状态
+ansible buildnodes -m shell -a 'sleep 5;cat /etc/issue' -P 1 -B 120 -f 2 -o
+```
+
+#### 2.复制文件
+```shell
+ansible buildnodes -m copy 'src=hosts.py dest=/root/hosts.py owner=root group=root mode=644 backup=yes' -o
+```
+
+#### 3.包管理
+```shell
+ansible buildnodes -m apt -a 'name=sysstat state=latest' -f 2 -o
+```
+
+#### 4.用户管理
+```shell
+ansible buildnodes -m user -a 'name=tester password="$1$s3aRAhUo$B8S/ei.VeKLJSC3h37aMP1"'
+```
+
+### (3)Playbook
+
+#### facts组件
+```shell
+ansible buildnodes -m setup
+ansible buildnodes -m setup -a 'filter="ansible_python_version"'
+```
+
+# 五、Playbook
+### (1)基本语法
+
+```
+---
+- hosts: all
+    tasks:
+        - name: Install Nginx Package
+          apt: name=nginx state=present
+
+        - name: Copy Nginx.conf
+          template: src=./nginx.conf.j2 dest=/etc/nginx/nginx.conf owner=root group=root mode=0644 validate='nginx -t -c %s'
+          notify:
+            - ReStart Nginx Service
+
+    handlers:
+        - name: ReStart Nginx Service
+          service: name=nginx state=restarted
+```
