@@ -78,7 +78,7 @@ ansible-doc ping
 四、组件介绍
 ============
 
-### (1)inventory
+### inventory
 
 ##### 静态主机配置列表
 
@@ -166,7 +166,7 @@ else:
 
 ##### ansible\_shell\_type
 
-### (2)Ah-Hoc命令
+### Ah-Hoc命令
 
 #### 1.后台运行
 
@@ -193,7 +193,7 @@ ansible buildnodes -m apt -a 'name=sysstat state=latest' -f 2 -o
 ansible buildnodes -m user -a 'name=tester password="$1$s3aRAhUo$B8S/ei.VeKLJSC3h37aMP1"'
 ```
 
-### (3)Playbook
+### Playbook
 
 #### facts组件
 
@@ -205,7 +205,7 @@ ansible buildnodes -m setup -a 'filter="ansible_python_version"'
 五、Playbook
 ============
 
-### (1)基本语法
+### 基本语法
 
 ``` {.yaml}
 ---
@@ -233,7 +233,7 @@ ansible-playbook nginx.yaml --list-task
 ansible-playbook -i hosts nginx.yaml -f 3
 ```
 
-### (2)变量与引用
+### 变量与引用
 
 ``` {.yaml}
 ---
@@ -264,7 +264,7 @@ ansible-playbook playbook.yaml -e "hehe=bilibili"
 ansible-playbook playbook.yaml -e "@var.json"
 ```
 
-### (3)循环
+### 循环
 
 ##### 1.标准loops
 
@@ -388,7 +388,7 @@ ansible-playbook playbook.yaml -e "@var.json"
             debug: msg="{% raw %}{% for i in ret.results %} {{ i.stdout }} {% endfor %}{% endraw %}"
 ```
 
-### (4)lookups
+### lookups
 
 ##### ansible支持从外部获取数据，lookups就是这样那个一种插件
 
@@ -459,7 +459,7 @@ ansible-playbook playbook.yaml -e "@var.json"
             debug: msg="{% raw %}the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}{% endraw %}"
 ```
 
-### (5)conditionals
+### conditionals
 
 ``` {.yaml}
 ---
@@ -473,9 +473,9 @@ ansible-playbook playbook.yaml -e "@var.json"
             when: ansible_default_ipv4.address == "172.29.88.100"
 ```
 
-### (6)Jinja2 filter
+### Jinja2 filter
 
-### (7)内置变量
+### 内置变量
 
 ##### 1.groups是inventory中所有主机的信息，是一个json字符串
 
