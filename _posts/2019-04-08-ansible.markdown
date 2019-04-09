@@ -200,7 +200,7 @@ ansible-playbook -i hosts nginx.yaml -f 3
       - var.json
     tasks:
       - name: display host info
-        debug: msg="the {{ inventory_hostname }} user is {{  ansible_ssh_user }},{{ hehe }},{{ xixi}},{{one}}"
+        debug: msg="the \{\{ inventory_hostname }} user is {{  ansible_ssh_user }},{{ hehe }},{{ xixi}},{{one}}"
       - name: register variable
         shell: hostname
         register: info
