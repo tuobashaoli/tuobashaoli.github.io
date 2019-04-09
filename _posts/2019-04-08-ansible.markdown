@@ -16,6 +16,7 @@ published: true
 * 轻量级
 * 简单易读
 * ... ...
+
 # 二、运行环境
 ### 配置文件
 ##### 查找配置文件的顺序
@@ -24,6 +25,7 @@ published: true
 2. ./ansible.cfg
 3. ~/.ansible.cfg
 4. /etc/ansible/ansible.cfg
+
 ##### ansible.cfg参数列表如下
 
 + inventory 主机列表 /etc/ansible/hosts
@@ -35,6 +37,7 @@ published: true
 + timeout 超时间隔 10
 + log\_path 日志路径，默认不记录，只有指定路径才记录 /var/log/ansible.log
 + ... ...
+
 # 三、帮助工具
 ```shell
 # 显示所有模块
@@ -42,6 +45,7 @@ ansible-doc -l
 # 显示该模块用法
 ansible-doc ping
 ```
+
 # 四、组件介绍
 ### (1)inventory
 ##### 静态主机配置列表
@@ -168,4 +172,44 @@ ansible buildnodes -m setup -a 'filter="ansible_python_version"'
     handlers:
         - name: ReStart Nginx Service
           service: name=nginx state=restarted
+```
+
+```shell
+# 进行语法检查
+ansible-playbook nginx.yaml --syntax-check
+# 列出所有task
+ansible-playbook nginx.yaml --list-task
+# 部署
+ansible-playbook -i hosts nginx.yaml -f 3
+```
+
+### (2)变量与引用
+
+```
+---
+  - hosts: all
+    gather_facts: False
+    vars_prompt:        #执行playbook时交互输入
+      - name: "one"
+        prompt: "first"
+        default: "ok"
+        private: no
+    vars:               #定义变量
+      xixi: gege
+    vars_files:         #从文件中获取变量
+      - var.json
+    tasks:
+      - name: display host info
+        debug: msg="the {{ inventory_hostname }} user is {{  ansible_ssh_user }},{{ hehe }},{{ xixi}},{{one}}"
+      - name: register variable
+        shell: hostname
+        register: info
+      - name: display variable
+        debug: msg="The variable is {{ info }}" #info是python字典，info['stdout']是执行的结果
+```
+
+```shell
+# 在执行playbook时指定变量
+ansible-playbook playbook.yaml -e "hehe=bilibili"
+ansible-playbook playbook.yaml -e "@var.json"
 ```
