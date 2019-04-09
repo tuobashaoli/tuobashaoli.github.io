@@ -401,3 +401,28 @@ ansible-playbook playbook.yaml -e "@var.json"
           - name: debug lookup
             debug: msg="{% raw %}the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}{% endraw %}"
 ```
+
+### (5)conditionals
+```yaml
+---
+    - hosts: buildnodes
+      gather_facts: True
+      vars:
+          contents: "{% raw %}{{ lookup('pipe','date +%F-%H-%M-%S') }}{% endraw %}"
+      tasks:
+          - name: debug lookup
+            debug: msg="{% raw %}the contents is {{ contents }}{% endraw %}"
+            when: ansible_default_ipv4.address == "172.29.88.100"
+```
+### (6)Jinja2 filter
+
+### (7)内置变量
+##### 1.groups是inventory中所有主机的信息，是一个json字符串
+
+```json
+{'ungrouped': [], 'all': [u'172.29.88.100', u'172.29.88.133', u'172.29.88.156'], u'buildnodes': [u'172.29.88.100', u'172.29.88.133', u'172.29.88.156']}
+```
+
+##### 2.hostvars
+##### 3.inventory\_hostname是返回inventory文件中定义的主机名，inventory\_hostname\_short返回的是inventory中定义的主机名的第一部分
+##### 4.play\_hosts返回当前playbook运行的主机信息，inventory\_dir返回当前playbook使用inventory目录
