@@ -1,0 +1,47 @@
+---
+categories: blog
+date: '2019-04-10 16:16:18'
+description: it is for nginx
+layout: post
+published: True
+title: "Nginx it?"
+---
+
+# 一、简介
+##### nginx是轻量级、高性能的web服务器和反向代理服务器
+```conf
+user  nginx;
+worker_processes  1;
+error_log  /var/log/nginx/error.log warn;  #定义错误日志存放地址和等级
+pid        /var/run/nginx.pid; #定义pid文件存放地址
+events {
+    worker_connections  1024; #最大并发数
+}
+http {
+client_max_body_size 10m; #单次请求的最大字节数
+    include       /etc/nginx/mime.types; #文件扩展名和类型映射表
+    default_type  application/octet-stream;     #默认文件类型
+    log_format  main  '$remote_addr -$remote_user  [$time_local] "$request"  '
+                      '  $status $body_bytes_sent "$http_referer"'
+                      ' "$http_user_agent" "$http_x_forwarded_for"';    #定义一个名字叫main的日志格式
+    access_log  /var/log/nginx/access.log  main;    #访问日志存储路径以及使用main格式的日志
+    sendfile        on; # 开启高效传输模式
+    tcp_nopush     on;    #累积数据包大小到一定量和响应头一起发送
+    tcp_nodelay     on;    #禁用naggle算法，立即发送缓冲区数据,对keep-alived有效
+    keepalive_timeout  65;    #长连接超时
+   #gzip  on;    
+    include /etc/nginx/conf.d/*.conf; #导入路由转发文件
+server {
+   server_name mobileprj.rd.tp-link.net #监听的域名
+   listen 80;#监听的端口
+   location /redmine { #根据路径分发
+   proxy_redirect off; #隐藏反向代理的服务器的头信息
+   proxy_set_header Host $host; #设置转发请求头的host，保留此设置，避免反向代理时无限循环重定向
+   proxy_set_header X-Real-IP $remote_addr; #设置转发请求的头的X-Real-IP
+   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;# 设置转发请求头的X-Forwarded-For
+   proxy_set_header User-Agent $http_user_agent; #设置转发请求头的User-Agent
+   proxy_pass http://172.17.0.1:8095;    #设置转发的服务地址
+   }
+}
+}
+```
