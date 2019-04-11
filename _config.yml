@@ -6,10 +6,10 @@
 # Site
 title: NexT
 subtitle:
-description:
-author: John Doe
+description: Where is my country?
+author: Tuo Bashaoli
 # Support language: de, en, fr-FR, id, ja, ko, pt-BR, pt, ru, zh-Hans, zh-hk, zh-tw
-language: en
+language: zh-Hans
 date_format: '%Y-%m-%d'
 
 # URL
@@ -19,7 +19,7 @@ baseurl:
 permalink: pretty
 
 # Pagination
-paginate: 10
+paginate: 8
 #paginate_path: "/page:num/"
 #archive:
   #paginate: 10
@@ -76,7 +76,7 @@ plugins:
 # ---------------------------------------------------------------
 
 # Put your favicon.ico into `assets/` directory.
-favicon: /assets/favicon.ico
+favicon: /assets/images/favicon.ico
 
 # Set default keywords (Use a comma to separate)
 keywords: "Jekyll, NexT"

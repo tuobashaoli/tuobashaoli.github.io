@@ -1,0 +1,490 @@
+---
+categories: blog
+date: '2019-04-08 15:18:18'
+description: it is for ansible
+layout: post
+published: True
+title: 'Ansible it!'
+...
+
+-   [一、简介](#一简介)
+-   [二、运行环境](#二运行环境)
+    -   [配置文件](#配置文件)
+-   [三、帮助工具](#三帮助工具)
+-   [四、组件介绍](#四组件介绍)
+    -   [(1)inventory](#inventory)
+    -   [(2)Ah-Hoc命令](#ah-hoc命令)
+    -   [(3)Playbook](#playbook)
+-   [五、Playbook](#五playbook)
+    -   [(1)基本语法](#基本语法)
+    -   [(2)变量与引用](#变量与引用)
+    -   [(3)循环](#循环)
+    -   [(4)lookups](#lookups)
+    -   [(5)conditionals](#conditionals)
+    -   [(6)Jinja2 filter](#jinja2-filter)
+    -   [(7)内置变量](#内置变量)
+
+一、简介
+========
+
+##### 在进行多个服务器配置管理时，为了提高效率，通过ansible达到同时管理所有节点，ansible基于python编写，由Paramiko和PyYAML俩个关键模块构建
+
+##### 特点如下：
+
+-   没有客户端，通过ssh链接节点
+-   不仅仅支持python，还支持多种动态语言开发模块
+-   非root账户也可使用
+-   轻量级
+-   简单易读
+-   ... ...
+
+二、运行环境
+============
+
+### 配置文件
+
+##### 查找配置文件的顺序
+
+1.  环境变量
+2.  ./ansible.cfg
+3.  \~/.ansible.cfg
+4.  /etc/ansible/ansible.cfg
+
+##### ansible.cfg参数列表如下
+
+-   inventory 主机列表 /etc/ansible/hosts
+-   library 存放模块的目录 /usr/share/my\_modules/
+-   forks 最多多少个进程同时工作 5
+-   sudo\_user 默认执行命令的用户 root
+-   remote\_port 远程端口 22
+-   host\_key\_checking
+    是否检查主机秘钥,一般下发控制主机的ssh公钥到节点，从而使用无密码访问
+    false
+-   timeout 超时间隔 10
+-   log\_path 日志路径，默认不记录，只有指定路径才记录
+    /var/log/ansible.log
+-   ... ...
+
+三、帮助工具
+============
+
+``` {.shell}
+# 显示所有模块
+ansible-doc -l
+# 显示该模块用法
+ansible-doc ping
+```
+
+四、组件介绍
+============
+
+### inventory
+
+##### 静态主机配置列表
+
+##### /etc/ansible/hosts
+
+``` {.shell}
+172.29.88.100
+172.29.88.103 ansible_ssh_pass='123456'
+[buildnodes]
+172.29.88.100
+172.29.88.133
+[buildnodes:vars]
+ansible_ssh_pass='123456'
+[allnodes:children]
+buildnodes
+172.29.88.156
+```
+
+##### 当然，可以在ansible.cfg中指定inventory为目录，这样该目录下的文件都是可以做主机配置列表
+
+##### 动态主机配置列表
+
+##### 在执行ansible命令时，使用-i参数指定该脚本即可，该脚本必须支持--list(-l)和--host(-H) + 主机ip，前者是返回所有主机及主机组信息，后者返回该主机的变量信息，返回格式都是json格式
+
+##### 一个参考的脚本
+
+``` {.python}
+#!/usr/bin/env python3
+#coding:utf8
+import json
+import sys
+ 
+def all():
+    info_dict = {
+    "all":[
+        "10.10.0.109",
+        "10.10.0.112"]
+    }
+    print(json.dumps(info_dict,indent=4))
+ 
+def group():
+    host1 = ['10.10.0.112']
+    host2 = ['10.10.0.112','10.10.0.109']
+    group1 = 'test1'
+    group2 = 'test2'
+    hostdata = {
+        group1:{"hosts":host1},
+        group2:{"hosts":host2}
+    }
+    print(json.dumps(hostdata,indent=4))
+ 
+def host(ip):
+    info_dict = {
+        "10.10.0.112": {
+            "ansible_ssh_host":"10.10.0.112",
+            "ansible_ssh_port":22,
+            "ansible_ssh_user":"root",
+            "ansible_ssh_pass":"123457"
+        },
+        "10.10.0.109": {
+            "ansible_ssh_host":"10.10.0.109",
+            "ansible_ssh_port":22,
+            "ansible_ssh_user":"root",
+            "ansible_ssh_pass":"xxxx"
+        }
+    }
+    print(json.dumps(info_dict,indent=4))
+ 
+if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
+    group()
+elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
+    host(sys.argv[2])
+else:
+    print("Usage: %s --list or --host <hostname>" % sys.argv[0])
+    sys.exit(1)
+```
+
+##### 内置参数
+
+##### ansible\_ssh\_user
+
+##### ansible\_ssh\_pass
+
+##### ansible\_python\_interpreter
+
+##### ansible\_shell\_type
+
+### Ah-Hoc命令
+
+#### 1.后台运行
+
+``` {.shell}
+# 后台执行最大时间是120秒，每1秒检查一下状态
+ansible buildnodes -m shell -a 'sleep 5;cat /etc/issue' -P 1 -B 120 -f 2 -o
+```
+
+#### 2.复制文件
+
+``` {.shell}
+ansible buildnodes -m copy 'src=hosts.py dest=/root/hosts.py owner=root group=root mode=644 backup=yes' -o
+```
+
+#### 3.包管理
+
+``` {.shell}
+ansible buildnodes -m apt -a 'name=sysstat state=latest' -f 2 -o
+```
+
+#### 4.用户管理
+
+``` {.shell}
+ansible buildnodes -m user -a 'name=tester password="$1$s3aRAhUo$B8S/ei.VeKLJSC3h37aMP1"'
+```
+
+### Playbook
+
+#### facts组件
+
+``` {.shell}
+ansible buildnodes -m setup
+ansible buildnodes -m setup -a 'filter="ansible_python_version"'
+```
+
+五、Playbook
+============
+
+### 基本语法
+
+``` {.yaml}
+---
+- hosts: all
+    tasks:
+        - name: Install Nginx Package
+          apt: name=nginx state=present
+
+        - name: Copy Nginx.conf
+          template: src=./nginx.conf.j2 dest=/etc/nginx/nginx.conf owner=root group=root mode=0644 validate='nginx -t -c %s'
+          notify:
+            - ReStart Nginx Service
+
+    handlers:
+        - name: ReStart Nginx Service
+          service: name=nginx state=restarted
+```
+
+``` {.shell}
+# 进行语法检查
+ansible-playbook nginx.yaml --syntax-check
+# 列出所有task
+ansible-playbook nginx.yaml --list-task
+# 部署
+ansible-playbook -i hosts nginx.yaml -f 3
+```
+
+### 变量与引用
+
+``` {.yaml}
+---
+  - hosts: all
+    gather_facts: False
+    vars_prompt:        #执行playbook时交互输入
+      - name: "one"
+        prompt: "first"
+        default: "ok"
+        private: no
+    vars:               #定义变量
+      xixi: gege
+    vars_files:         #从文件中获取变量
+      - var.json
+    tasks:
+      - name: display host info
+        debug: msg="{% raw %}the {{ inventory_hostname }} user is {{  ansible_ssh_user }},{{ hehe }},{{ xixi}},{{one}} {% endraw %}"
+      - name: register variable
+        shell: hostname
+        register: info
+      - name: display variable
+        debug: msg="{% raw %}The variable is {{ info }} {% endraw %}" #info是python字典，info['stdout']是执行的结果
+```
+
+``` {.shell}
+# 在执行playbook时指定变量
+ansible-playbook playbook.yaml -e "hehe=bilibili"
+ansible-playbook playbook.yaml -e "@var.json"
+```
+
+### 循环
+
+##### 1.标准loops
+
+``` {.yaml}
+---
+    - hosts: all
+      gather_facts: False
+      tasks:
+          - name: debug loops
+            debug: msg="{% raw %}name -> {{ item.key }},value -> {{ item.value }} {% endraw %}"
+            with_items:
+              - {key: "one",value: "hehe"}
+              - {key: "second",value: "haha"}
+```
+
+##### 2.嵌套loops
+
+``` {.yaml}
+---
+    - hosts: all
+      gather_facts: False
+      tasks:
+          - name: debug loops
+            debug: msg="{% raw %}name -> {{ item[0] }},value -> {{ item[1] }}{% endraw %}"
+            with_nested:
+            - ['A']
+            - ['a','b','c']
+```
+
+##### 3.散列loops
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: False
+      vars:
+          users:
+              jenkins:
+                  name: jenkins
+                  shell: bash
+              root:
+                  name: root
+                  shell: sh
+      tasks:
+          - name: debug loops
+            debug: msg="{% raw %}name -> {{ item.key }},value -> {{ item.value.name }} shell -> {{ item.value.shell }}{% endraw %}"
+            with_dict: users
+```
+
+##### 4.文件匹配loops
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: False
+      tasks:
+          - name: debug loops
+            debug: msg="{% raw %}files -> {{ item }}{% endraw %}"
+            with_fileglob:
+                - /roor/ansible/*.yaml
+```
+
+##### 5.随机选择loops
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: False
+      tasks:
+          - name: debug loops
+            debug: msg="{% raw %}name -> {{ item }}{% endraw %}"
+            with_random_choice:
+                - "1"
+                - "2"
+                - "3"
+```
+
+##### 6.条件判断loops
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: False
+      tasks:
+          - name: debug loops
+            shell: cat /etc/issue
+            register: issue
+            until: issue.stdout.startswith("Ubuntu")
+            retries: 5
+            delay: 5
+```
+
+##### 7.文件优先匹配loops
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: False
+      tasks:
+          - name: debug loops
+            debug: msg="{% raw %}files -> {{ item }}{% endraw %}"
+            with_first_found:
+                - "{% raw %}{{ ansible_distribution }}.yaml{% endraw %}"
+                - "default.yaml"
+```
+
+##### 8.register loops
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: False
+      tasks:
+          - name: debug loops
+            shell: "{% raw %}{{ item }}{% endraw %}"
+            with_items:
+                - hostname
+                - uname
+            register: ret
+          - name: display loops
+            debug: msg="{% raw %}{% for i in ret.results %} {{ i.stdout }} {% endfor %}{% endraw %}"
+```
+
+### lookups
+
+##### ansible支持从外部获取数据，lookups就是这样那个一种插件
+
+##### 1.file
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: False
+      vars:
+          contents: "{% raw %}{{ lookup('file','/etc/networks') }}{% endraw %}"
+      tasks:
+          - name: debug lookup
+            debug: msg="{% raw %}the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}{% endraw %}"
+```
+
+##### 2.password
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: False
+      vars:
+          contents: "{% raw %}{{ lookup('password','hehe') }}{% endraw %}"
+      tasks:
+          - name: debug lookup
+            debug: msg="{% raw %}the contents is {{ contents }}{% endraw %}"
+```
+
+##### 3.pipe
+
+##### 实际上就是利用python的subprocess.Popen执行shell命令
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: False
+      vars:
+          contents: "{% raw %}{{ lookup('pipe','date +%F-%H-%M-%S') }}{% endraw %}"
+      tasks:
+          - name: debug lookup
+            debug: msg="{% raw %}the contents is {{ contents }}{% endraw %}"
+```
+
+##### 4.redisi\_kv
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: False
+      vars:
+          contents: "{% raw %}{{ lookup('redis_kv','redis://localhost:6379,ansible') }}{% endraw %}"
+      tasks:
+          - name: debug lookup
+            debug: msg="{% raw %}the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}{% endraw %}"
+```
+
+##### 5.template
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: True
+      vars:
+          contents: "{% raw %}{{ lookup('template','./lookups.j2') }}{% endraw %}" #lookups.j2是一个jinja模板文件
+      tasks:
+          - name: debug lookup
+            debug: msg="{% raw %}the contents is {% for i in contents.split('\n') %}{{ i }}{% endfor %}{% endraw %}"
+```
+
+### conditionals
+
+``` {.yaml}
+---
+    - hosts: buildnodes
+      gather_facts: True
+      vars:
+          contents: "{% raw %}{{ lookup('pipe','date +%F-%H-%M-%S') }}{% endraw %}"
+      tasks:
+          - name: debug lookup
+            debug: msg="{% raw %}the contents is {{ contents }}{% endraw %}"
+            when: ansible_default_ipv4.address == "172.29.88.100"
+```
+
+### Jinja2 filter
+
+### 内置变量
+
+##### 1.groups是inventory中所有主机的信息，是一个json字符串
+
+``` {.json}
+{'ungrouped': [], 'all': [u'172.29.88.100', u'172.29.88.133', u'172.29.88.156'], u'buildnodes': [u'172.29.88.100', u'172.29.88.133', u'172.29.88.156']}
+```
+
+##### 2.hostvars
+
+##### 3.inventory\_hostname是返回inventory文件中定义的主机名，inventory\_hostname\_short返回的是inventory中定义的主机名的第一部分
+
+##### 4.play\_hosts返回当前playbook运行的主机信息，inventory\_dir返回当前playbook使用inventory目录

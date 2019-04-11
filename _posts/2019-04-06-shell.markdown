@@ -1,0 +1,202 @@
+---
+categories: blog
+date: '2019-04-06 11:25:18'
+description: it is for shell
+layout: post
+published: True
+title: 'Shell it!'
+...
+
+-   [shell命令总结](#shell命令总结)
+    -   [一、数据流导向](#一数据流导向)
+    -   [二、管道符及相关命令](#二管道符及相关命令)
+-   [shell脚本](#shell脚本)
+    -   [一、特殊字符变量](#一特殊字符变量)
+    -   [二、数值运算](#二数值运算)
+    -   [三、test命令](#三test命令)
+    -   [四、条件和循环](#四条件和循环)
+    -   [五、压缩和解压](#五压缩和解压)
+    -   [六、日期](#六日期)
+    -   [七、交互输入](#七交互输入)
+
+shell命令总结
+=============
+
+### 一、数据流导向
+
+##### 1.标准输入 stdin 代码为0，使用&lt; 或者 &lt;&lt;
+
+##### 2.标准输出 stdout 代码为1，使用&gt; 或者 &gt;&gt;
+
+##### 3.标准错误输出 stderr 代码为2，使用2&gt; 或者 2&gt;&gt;
+
+##### 黑洞装置：不需要的信息就输出到/dev/null
+
+##### 将错误信息输出到正确信息：2&gt;&1 或者 &&gt;
+
+``` {.shell}
+cat >hello << "eof"
+```
+
+### 二、管道符及相关命令
+
+##### 管道符： | ，在管道符右边，使用减号 - 来指代管道符左边的输出，比如
+
+``` {.shell}
+cat a.txt | paste - b.txt
+```
+
+##### 截取命令：
+
+##### cut -d '分割字符' -f index,index2
+
+##### cut -c 8-13 \#取出第8个字符到第13个字符
+
+##### grep -cinv ‘搜寻的字符串’ filename \#count ignore number reverse
+
+##### 排序命令：
+
+##### sort -nru \#number reverse uniq
+
+``` {.shell}
+cat /etc/passwd |sort -t ':' -k 3  #用冒号分割，用每行中分割后的第三个字符排序
+```
+
+##### uniq -ic \# ignore count
+
+##### wc -lwm \#line word 字符数
+
+##### 双重导向：
+
+##### last |tee last.list|cut -d " " -f 1
+
+##### 字符转换：
+
+##### tr '\[a-z\]' '\[A-Z\]'
+
+##### tr -d ':' \#删除冒号
+
+##### col -x \#将tab装换成space
+
+##### join \[-ti12\] file1 file2 \#joinm默认使用空格分割，并且对比俩个文件第一个字段数据，如果相同，则将俩行数据连成一行，并且自一个字段放在第一个
+
+``` {.shell}
+join -t ':' /etc/passed /etc/shadow
+```
+
+##### paste \[-d\] file1 file2
+
+``` {.shell}
+paste /etc/passwd /etc/shadow
+paste -d "|" /etc/passwd /etc/shadow #使用竖线做分隔符
+```
+
+##### expand -t 10 file \#用10个空格替换tab键
+
+##### 分割文件：
+
+##### split \[-bl\] file PREFIX
+
+``` {.shell}
+split -b 300k /etc/service
+split -l 200 /etc/service
+```
+
+##### 参数代换
+
+##### xargs \[-0epn\] command \#eof print number
+
+``` {.shell}
+cut -d ":" -f 1 /etc/passwd |head -n 3|xargs -n 1 id
+echo '11@22@33' |xargs -d '@' -n 1 echo
+```
+
+##### 行处理
+
+##### sed -n '2,5p' file
+
+##### sed -n '/last/,5p' file
+
+shell脚本
+=========
+
+### 一、特殊字符变量
+
+##### \$\# 参数个数
+
+##### \$0 执行的脚本名称
+
+##### \$1 第一个参数
+
+##### \$@ 参数列表
+
+##### \$\* 以一个字符串形式列出所有参数
+
+##### \$\$ 当前shell进程的pid
+
+##### \$? 上一个shell命令执行的返回值
+
+### 二、数值运算
+
+``` {.shell}
+var=$(( 13 % 3))
+echo $var
+echo "123.123*55.9" |bc
+```
+
+### 三、test命令
+
+##### test \[-efd\]
+
+##### test \[-rwx\]
+
+##### test \[-eq -gt -lt -ne -ge -le\]
+
+##### test \[-nt -ot -ef\]
+
+##### test \[-zn\]
+
+##### test \[-ao !\]
+
+##### 使用\[ \]进行判断，替换test，\[\[ \]\]里面可以使用正指表达式
+
+### 四、条件和循环
+
+##### 略
+
+### 五、压缩和解压
+
+##### tar
+
+##### -c 压缩 ; -x 解压;-t 查看;-r 追加;-u 更新
+
+##### -z gzip;-j bz2;-J xz
+
+##### -v 显示过程
+
+##### -O 解压到stdout
+
+##### -f 文件名称
+
+``` {.shell}
+tar -zxvf abc.tar.gz -C /home
+tar -zcvf snap.tar.gz /home/snap
+```
+
+### 六、日期
+
+##### date +%F-%H-%M-%S
+
+### 七、交互输入
+
+``` {.shell}
+read -p "please enter your name" name
+read -t 5 name #等待5秒后，返回非0状态
+read -s passwd #不显示输入内容
+cat test|while read line
+do
+  echo "$line"
+done
+```
+
+##### 默认read读取的变量到\$REPLY
