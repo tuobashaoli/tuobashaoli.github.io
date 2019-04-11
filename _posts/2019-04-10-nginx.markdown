@@ -32,7 +32,7 @@ client_max_body_size 10m; #单次请求的最大字节数
    #gzip  on;    
     include /etc/nginx/conf.d/*.conf; #导入路由转发文件
 server {
-   server_name mobileprj.rd.tp-link.net #监听的域名
+   server_name mobileprj.rd.tp-link.net; #监听的域名
    listen 80;#监听的端口
    location /redmine { #根据路径分发
    proxy_redirect off; #隐藏反向代理的服务器的头信息
@@ -106,21 +106,76 @@ keepalive_requests #在一个keep-alive关闭之前可以接收多少个请求
 keepalive_timeout #keep-alive连接持续多久
 large_client_header_buffers #定义最大数量和最大客户端请求头大小
 msie_padding #为了填充响应的大小至512字节，对于 MSIE 客户端，大于400 的状态代码会被添加注释以便满足512字节，通过启用该命令可以阻止这种行为
-msie refresh #对于 MSIE 客户端，该指令可启用发送一个 refresh 头，而不是redirect
+msie_refresh #对于 MSIE 客户端，该指令可启用发送一个 refresh 头，而不是redirect
 ```
 
 ##### 文件IO指令
 
 ```
-aio #启用异步文件io，对于linux，需要指定directio，自动禁用sendfile
-directio
+aio #启用异步文件io，对于linux，需要指定directio大小，当aio生效的时候，就会自动禁用sendfile
+directio #可以设置为off或者某个大小值，表示当文件大小大于等于这个值时启用directio，否则使用sendfile，对于大文件，使用aio，节省cpu，对于小文件，使用sendfile，减少拷贝，
 directio_alignment #设置directio算法，默认值是512，对于xfs文件系统推荐使用4KB
 open_file_cache #配置一个缓存用于存储打开文件描述符、目录查询和文件查询错误
 open_file_cache_errors #启动文件查询错误缓存
-open_file_cache_min_uses #
+open_file_cache_min_uses #open_file_cache缓存的文件描述符保留在缓存中
 open_file_cache_valid #指定对open_file_cache缓存有效性检查的时间间隔
 postpone_output # nginx发送给客户端最小的数值
 read_ahead #内核讲预读文件的大小，如果可能的话
-sendfile #直接复制数据从一个到另一个文件描述符
-sendfile_max_chunk #在一个snedfile中复制最大数据的大小
+sendfile #将文件从磁盘拷贝到内核缓冲区，再将记录数据位置和长度的相关数据保存到socket的相关缓存
+sendfile_max_chunk #在一个snedfile中复制最大数据的大小，减少阻塞调用sendfile()所花费的最长时间
+```
+
+##### Hash指令
+
+```
+server_names_hash_bucket_size #保存server_name散列表大小的桶
+server_names_hash_max_size #server_name散列表最大值
+types_hash_bucket_size #指定存储散列表的桶的大小
+types_hash_max_size # 指定散列类型表的最大值
+variables_hash_bucket_size #指定用于存储保留变量桶的大小
+variables_hash_max_size #存储保留变量最大散列值的大小
+```
+
+##### socket指令
+
+```
+lingering_close #该指令指定如何保持客户端的连接，以便用于更多数据的传输
+lingering_time #在使用 lingering close 指令的连接中，该指令指定客户端连接为了处理更多的数据需要保持打开连接的时间
+lingering_timeout #结合 lingering close ，该指令显示 Nginx 在关闭客户端连接之前，为获得更多数据会等待多久
+reset_timedout_connection
+send_lowat
+send_timeout
+tcp_nodelay
+tcp_nopush
+```
+
+### 虚拟服务器
+##### 由关键字server开始的部分都叫虚拟服务器... ...
+##### 一个虚拟服务器由listen和server\_name指令组合定义，listen指定定义了一个ip地址/端口组合或者是unix域套接字路径
+
+```conf
+listen address [:port];
+listen port;
+listen unix:path;
+```
+
+##### 对于server\_name，其指令相当简单
+```
+*.example.com
+www.example.*
+.example.com
+~^www\.example\.com$
+~^www(\d+).example\.(com)$
+```
+
+##### location用于server内部，
+```
+location [ = | ~ | ~* | ^~ ] uri { ... }
+location @name { ... }
+---
+=：精确匹配（必须全部相等），不可以嵌套location
+~：大小写敏感
+~*：忽略大小写
+^~：只需匹配uri部分
+@：内部服务跳转，不可以嵌套location
 ```
