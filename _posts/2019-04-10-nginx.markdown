@@ -47,7 +47,15 @@ server {
 ```
 
 # 二、安装
-##### 推荐使用源码安装
+### 使用包管理器安装
+```
+# deb
+sudo apt-get install nginx
+
+# rpm
+sudo yum install nginx
+```
+### 使用源码安装
 ##### 官网上下载源码后，解压在解压后的目录执行
 ```shell
 ./configure #可以在这一步添加配置参数,具体参数可以通过./configure --help命令查看
