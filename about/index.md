@@ -3,6 +3,7 @@ layout: page
 type: about
 ---
 
+#个人技术栈
 ### 熟悉ruby编程，维护过redmine，进行过redmine插件的开发
 ### 熟悉linux shell命令，做过linux服务器运维
 ### 维护过jenkins系统，熟练掌握pipline编译构建
