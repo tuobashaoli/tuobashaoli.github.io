@@ -4,7 +4,7 @@
 # ---------------------------------------------------------------
 
 # Site
-title: NexT
+title: Hei fe
 subtitle:
 description: Where is my country?
 author: Tuo Bashaoli
@@ -19,7 +19,7 @@ baseurl:
 permalink: pretty
 
 # Pagination
-paginate: 8
+paginate: 5
 #paginate_path: "/page:num/"
 #archive:
   #paginate: 10
@@ -233,7 +233,7 @@ social_icons:
 
 # Sidebar Avatar
 # in directory: /assets/images/avatar.gif
-#avatar:
+avatar: /assets/images/favicon.ico
 
 
 # Table Of Contents in the Sidebar
@@ -256,7 +256,7 @@ toc:
 
 sidebar:
   # Sidebar Position, available value: left | right
-  position: left
+  position: right
   #position: right
 
   # Sidebar Display, available value:
