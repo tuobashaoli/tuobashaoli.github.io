@@ -45,3 +45,82 @@ server {
 }
 }
 ```
+
+# 二、安装
+##### 推荐使用源码安装
+##### 官网上下载源码后，解压在解压后的目录执行
+```shell
+./configure #可以在这一步添加配置参数,具体参数可以通过./configure --help命令查看
+make && sudo make install
+```
+##### 对于不同用途，建议采用不同配置
+```shell
+# 对于网络加速代理
+./configure --with-http_ssl_module --with-htpp_realip_module --with-http_geoip_module --with-http_stub_status_module --with-openssl=${BUILD_DIR}/openssl-1.0.1p
+# 对于Web服务器
+./configure --with-http_stub_status_module
+```
+##### 当然，可以安装第三方模块，注意依赖关系
+```shell
+./configure --add-module=<path>#path是第三方模块目录
+```
+
+# 三、配置指南
+
+### 基本配置格式
+```
+<section> {
+  <directive> <parameters>;
+}
+```
+### 全局配置参数
+```
+user #配置worker进程的用户和组，如果忽略了group，则group使用该用户所在的组
+worker_processes #worker进程的启动数量，
+error_log #错误日志路径和等级
+pid #设置记录主进程ID的文件
+use #指定使用什么样的连接方法，需要配合events区段
+worker_connections #最大并发数
+```
+### 使用include文件
+
+```conf
+include /etc/nginx/conf.d/*.conf;
+```
+
+##### 注意这些文件要有正确的nginx语法
+### HTTP的server
+##### 客户端指令
+```
+chunked_transfer_encoding #
+client_body_buffer_size #设置客户端的缓存大小
+client_body_in_file_only #设置为"on"时，将客户端请求体强制写入磁盘文件
+client_body_in_single_buffer #强制讲客户端请求体保存在单个缓存中
+client_body_temp_path #定义一个路径，用于保存客户端请求体
+client_body_timeout #该指令指定客户体成功读取的两个操作之间的时间间隔
+client_header_buffer_size #为客户端请求头指定一个缓存大小，当请求头大于1KB会用到这个设置
+client_header_timeout #读取整个客户端头的超时时间标准
+client_max body_size #允许的客户端的最大请求头
+keepalive_disable #对于某些客户端禁用keep-alive功能，比如msie6
+keepalive_requests #在一个keep-alive关闭之前可以接收多少个请求
+keepalive_timeout #keep-alive连接持续多久
+large_client_header_buffers #定义最大数量和最大客户端请求头大小
+msie_padding #为了填充响应的大小至512字节，对于 MSIE 客户端，大于400 的状态代码会被添加注释以便满足512字节，通过启用该命令可以阻止这种行为
+msie refresh #对于 MSIE 客户端，该指令可启用发送一个 refresh 头，而不是redirect
+```
+
+##### 文件IO指令
+
+```
+aio #启用异步文件io，对于linux，需要指定directio，自动禁用sendfile
+directio
+directio_alignment #设置directio算法，默认值是512，对于xfs文件系统推荐使用4KB
+open_file_cache #配置一个缓存用于存储打开文件描述符、目录查询和文件查询错误
+open_file_cache_errors #启动文件查询错误缓存
+open_file_cache_min_uses #
+open_file_cache_valid #指定对open_file_cache缓存有效性检查的时间间隔
+postpone_output # nginx发送给客户端最小的数值
+read_ahead #内核讲预读文件的大小，如果可能的话
+sendfile #直接复制数据从一个到另一个文件描述符
+sendfile_max_chunk #在一个snedfile中复制最大数据的大小
+```
