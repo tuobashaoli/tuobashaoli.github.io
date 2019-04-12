@@ -188,7 +188,7 @@ location @name { ... }
 @：内部服务跳转，不可以嵌套location
 ```
 
-# 反向代理服务器
+# 四、反向代理服务器
 ###简介
 ##### Nginx 能够作为 一个反向代理来终结来自于客户端的请求，并且向上游服务器打开一个新请求
 ```conf
@@ -238,7 +238,8 @@ proxy_temp_path # 该指令设定临时文件的缓冲 ， 用于缓冲从上游
 ```
 
 ### 带有cookie的遗留应用程序
-##### 如果被反向代理服务器设置自己的域和路径的cookie，就要在转发这些服务器请求的时候，对域和路径进行修改
+
+如果被反向代理服务器设置自己的域和路径的cookie，就要在转发这些服务器请求的时候，对域和路径进行修改
 ```conf
 server {
 server_name app.example.com;
@@ -253,7 +254,8 @@ location /legacy1 {
 ```
 
 ### upstream模块
-##### 一般在做反向代理服务器的时候，会使用upstream模块进行做负载均衡或者备份服务，放在http模块中
+
+一般在做反向代理服务器的时候，会使用upstream模块进行做负载均衡或者备份服务，放在http模块中
 
 ```conf
 ... ...
@@ -287,6 +289,31 @@ server #该指令为 upstream 定义一个服务器地址（带有 TCP 端口号
 ```
 
 ### Keepalive
-##### 如果要实现upstream长连接，则每个进程需要另外一个connection pool，里面都是长连接。一旦与后端服务器建立连接，则在当前请求连接结束之后不会立即关闭连接，而是把用完的连接保存在一个keepalive connection pool里面，以后每次需要建立向后连接的时候，只需要从这个连接池里面找，如果找到合适的连接的话，就可以直接来用这个连接，不需要重新创建socket或者发起connect()
+
+如果要实现upstream长连接，则每个进程需要另外一个connection pool，里面都是长连接。一旦与后端服务器建立连接，则在当前请求连接结束之后不会立即关闭连接，而是把用完的连接保存在一个keepalive connection pool里面，以后每次需要建立向后连接的时候，只需要从这个连接池里面找，如果找到合适的连接的话，就可以直接来用这个连接，不需要重新创建socket或者发起connect()
 ![avatar](/assets/images/nginx_upstream_keepalive.jpg)
 ### 非HTTP型的上游服务器
+##### memcached上游服务器
+##### FastCGI上游服务器
+##### SCGI
+##### uWSGI
+### 负载均衡
+##### 负载均衡算法
+
+轮询、ip哈希、最少连接数
+
+##### 错误文件处理上游服务器问题
+
+上游服务器无法响应请求的情况，在这些情况下，可以将 Nginx 配置为从它的本地磁盘提供一个文件。
+
+```
+server {
+  error_page 500 502 503 504 /50x .html;
+  location = /50x.html {
+    root share/examples/nginx/html;
+  }
+}
+```
+
+# 反向代理高级使用
+### 安全隔离
