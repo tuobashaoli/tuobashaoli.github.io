@@ -324,3 +324,81 @@ server {
 
 # 五、反向代理高级使用
 ### 安全隔离
+
+##### 使用ssl对流量进行加密
+
+对于使用浏览器支持的ssl证书，需要付费，这里使用openssl生成一个自签ssl证书，然后进行配置
+
+```conf
+server {
+listen 443 default ssl;
+
+server_name www.example.com;
+
+ssl_prefer_server_ciphers on;
+
+ssl_protocols TLSvl SSLv3;
+
+ssl_ciphers RC4:HIGH:!aNULL:!MD5:@STRENGTH;#使用RC4算法
+
+ssl_session_cache shared:WEB:10m; # 缓存在所有工作进程之间共享
+
+ssl_certificate /usr/local/etc/nginx/www.example.com.crt; # 指定证书
+
+ssl_certificate_key /usr/local/etc/nginx/www.example.com.key; # 指定key
+
+  location / {
+
+    proxy_set_header X-FORWARDED-PROTO https;
+
+    proxy_pass http://upstream;
+  }
+}
+```
+
+##### 使用ssl进行客户端身份验证
+
+##### 基于原始IP阻止流量
+
+在编译时，添加GeoIP模块， --with-http\_geoip\_module，并且在系统中安装了MaxMind GeoIP库，在http中，使用geoip\_country指令指定预编译数据库文件文职，通过国家代码，设置阻止/允许IP地址访问，
+
+```conf
+geoip_country /usr/local/etc/geo/GeoIP.dat
+```
+
+变量$geoip\_country\_code的值讲被设置为ISO俩个字母的原始国家码，然后根据该变量进行控制流量了，如下示例，定义变量$exclusions，默认值是0，当ip是127.0.0.1或者属于172.29.88.0/19，则该值变为1，在之后的逻辑中，当$geoip\_country\_code为CH时，将$exclusions置为1，从而允许访问
+```
+... ...
+http {
+
+geoip_country /usr/local/etc/geo/GeoIP.dat;
+
+geo $exclusions {
+
+  default 0;
+  127.0.0.1 1;
+  172.29.88.0/19 1;
+}
+
+  server {
+
+    if ($geoip_country_code = "CH"){
+
+      set $exclusions 1;
+    }
+    location / {
+      if($exclusions ＝ "0"){
+        return 403;
+      }
+
+      proxy_pass http://upstream;
+
+     }
+
+  }
+}
+```
+
+当然，可以使用键值对存储某个ip访问的频率来决定是否限制访问
+
+### 孤立应用程序组件的扩展
