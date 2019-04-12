@@ -32,7 +32,7 @@ client_max_body_size 10m; #单次请求的最大字节数
    #gzip  on;    
     include /etc/nginx/conf.d/*.conf; #导入路由转发文件
 server {
-   server_name mobileprj.rd.tp-link.net; #监听的域名
+   server_name mobileprj.rd.company.net; #监听的域名
    listen 80;#监听的端口
    location /redmine { #根据路径分发
    proxy_redirect off; #隐藏反向代理的服务器的头信息
@@ -108,7 +108,7 @@ client_body_temp_path #定义一个路径，用于保存客户端请求体
 client_body_timeout #该指令指定客户体成功读取的两个操作之间的时间间隔
 client_header_buffer_size #为客户端请求头指定一个缓存大小，当请求头大于1KB会用到这个设置
 client_header_timeout #读取整个客户端头的超时时间标准
-client_max body_size #允许的客户端的最大请求头
+client_max_body_size #允许的客户端的最大请求头
 keepalive_disable #对于某些客户端禁用keep-alive功能，比如msie6
 keepalive_requests #在一个keep-alive关闭之前可以接收多少个请求
 keepalive_timeout #keep-alive连接持续多久
@@ -213,5 +213,80 @@ proxy_pass http://localhost:8080;
 
 ```
 proxy_connect_timeout # 从接受请求到连接上游服务器最长等待时间
-proxy_cookie_domain # 该指令替代从上游服务器来的 Set-Cookie 头中的 domain 属性,domain被替换为一个字符串、 一个正则表达式，或者是引用的变量
+proxy_cookie_domain # 该指令替代从上游服务器来的 Set-Cookie 头中的 domain 属性,值是一个字符串、 一个正则表达式，或者是引用的变量,但是一般情况下，response中的cookie中domain是个可选项，并不一定存在,这时就不用设置这个值
 ```
+![avatar](/assets/images/response_cookie.png)
+```
+proxy_cookie_path # 替代从上游服务器来的 Set-Cookie 头中的 path 属性
+proxy_headers_hash_bucket_size # 该指令指定头名字的最大值
+proxy_headers_hash_max_size  # 从上游服务器接收到头的总大小
+proxy_hide_header # 指定不应该传递给客户端头的列表
+proxy_http_version
+proxy_ignore_client_abort # 如果该指令设置为 on ，那么当客户端放弃连接后， Nginx 将不会放弃同上游服务器的连接
+proxy_ignore_headers # 当处理来自于上游服务器的响应时，该指令设置哪些头可以被忽略
+proxy_intercept_errors # 如果启用该指令， Nginx 将会显示配置的 error page 错误，而不是来自子上游服务器的直接响应
+proxy_max_temp_file_size # 在写入内存缓冲区时，当响应与内存缓冲区不匹配时，该指令给出溢出文件的最大值
+proxy_pass # 该指令指定请求被传递到的上游服务器，格式为 URL
+proxy_pass_header # 该指令覆盖掉在 proxy_hide_header 指令中设置的头，允许这些头传递到客户端
+proxy_pass_request_body # 如果设置为 off ， 那么该指令将会阻止请求体发送到上游服务器
+proxy_pass_request_headers # 如果设置为 off ， 该指令则会阻止请求头发送到上游服务器
+proxy_redirect # 重写来自于上游服务器的 Location 和 Refresh 头
+proxy_set_body # 发送到上游服务器的请求体可能会被该指令的设置值修改
+proxy_set_header #
+proxy_temp_file_write_size # 该指令限制在同一时间内缓冲到一个临时文件的数据量， 以使得nginx 不会过长地阻止单个请求
+proxy_temp_path # 该指令设定临时文件的缓冲 ， 用于缓冲从上游服务器来的文件，可以设定目录的层次
+```
+
+### 带有cookie的遗留应用程序
+##### 如果被反向代理服务器设置自己的域和路径的cookie，就要在转发这些服务器请求的时候，对域和路径进行修改
+```conf
+server {
+server_name app.example.com;
+
+location /legacy1 {
+    proxy_cookie_domain legacy1.example.com app.example.com;
+    proxy_cookie_path $uri /legacy1$uri;
+    proxy_redirect default;
+    proxy_pass http://legacy1.example.com/;
+  }
+}
+```
+
+### upstream模块
+##### 一般在做反向代理服务器的时候，会使用upstream模块进行做负载均衡或者备份服务，放在http模块中
+
+```conf
+... ...
+http {
+... ...
+  upstream loadbalance {
+    ip_hash;
+    server 172.17.0.2:8095 weight=2;
+    server 172.17.0.3:8095 weight=5;
+    server 172.17.0.4:8095 backup;
+    keepalive 32;
+  }
+  location / {
+    proxy_set_header Connection "";
+    proxy_pass http://loadbalance;
+  }
+}
+... ...
+```
+
+```conf
+ip_hash #该指令通过 IP 地址的哈希值确保客户端均匀地连接所有服务器，键值基于c类地址
+keepalive #该指令指定每一个 worker 进程缓存到上游服务器的连接数。在使用 HTTP连接时， proxy_http_version 应该设置为 1.1 ，并且将 proxy_set_header 设置为 Connection ""
+least_conn #该指令激活负载均衡算法，将请求发送到活跃连接数最少的那台服务器
+server #该指令为 upstream 定义一个服务器地址（带有 TCP 端口号的域名、 IP地址，或者是 UNIX 域套接字)和可选参数。参数如下
+#weight ：该参数设置一个服务器的优先级优于其他服务器。
+#max_fails ： 该参数设置在 fail_ timeout 时间之内尝试对一个服务器连接的最大次数，如果超过这个次数，那么就会被标记为 down 。
+#fail_timeout ： 在这个指定的时间内服务器必须提供响应，如果在这个时间内没有收到响应，那么服务器将会被标记为 down 状态。
+#backup ： 一旦其他服务器窑机，那么仅有该参数标记的机器才会接收请求。
+#down ：该参数标记为一个服务器不再接受任何请求
+```
+
+### Keepalive
+##### 如果要实现upstream长连接，则每个进程需要另外一个connection pool，里面都是长连接。一旦与后端服务器建立连接，则在当前请求连接结束之后不会立即关闭连接，而是把用完的连接保存在一个keepalive connection pool里面，以后每次需要建立向后连接的时候，只需要从这个连接池里面找，如果找到合适的连接的话，就可以直接来用这个连接，不需要重新创建socket或者发起connect()
+![avatar](/assets/images/nginx_upstream_keepalive.jpg)
+### 非HTTP型的上游服务器
