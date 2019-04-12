@@ -8,7 +8,8 @@ title: "Nginx it?"
 ---
 
 # 一、简介
-##### nginx是轻量级、高性能的web服务器和反向代理服务器
+
+nginx是轻量级、高性能的web服务器和反向代理服务器
 ```conf
 user  nginx;
 worker_processes  1;
@@ -56,19 +57,22 @@ sudo apt-get install nginx
 sudo yum install nginx
 ```
 ### 使用源码安装
-##### 官网上下载源码后，解压在解压后的目录执行
+
+官网上下载源码后，解压在解压后的目录执行
 ```shell
 ./configure #可以在这一步添加配置参数,具体参数可以通过./configure --help命令查看
 make && sudo make install
 ```
-##### 对于不同用途，建议采用不同配置
+
+对于不同用途，建议采用不同配置
 ```shell
 # 对于网络加速代理
 ./configure --with-http_ssl_module --with-htpp_realip_module --with-http_geoip_module --with-http_stub_status_module --with-openssl=${BUILD_DIR}/openssl-1.0.1p
 # 对于Web服务器
 ./configure --with-http_stub_status_module
 ```
-##### 当然，可以安装第三方模块，注意依赖关系
+
+当然，可以安装第三方模块，注意依赖关系
 ```shell
 ./configure --add-module=<path>#path是第三方模块目录
 ```
@@ -96,8 +100,9 @@ worker_connections #最大并发数
 include /etc/nginx/conf.d/*.conf;
 ```
 
-##### 注意这些文件要有正确的nginx语法
+注意这些文件要有正确的nginx语法
 ### HTTP的server
+
 ##### 客户端指令
 ```
 chunked_transfer_encoding #
@@ -158,8 +163,9 @@ tcp_nopush
 ```
 
 ### 虚拟服务器
-##### 由关键字server开始的部分都叫虚拟服务器... ...
-##### 一个虚拟服务器由listen和server\_name指令组合定义，listen指定定义了一个ip地址/端口组合或者是unix域套接字路径
+
+由关键字server开始的部分都叫虚拟服务器... ...
+一个虚拟服务器由listen和server\_name指令组合定义，listen指定定义了一个ip地址/端口组合或者是unix域套接字路径
 
 ```conf
 listen address [:port];
@@ -167,7 +173,7 @@ listen port;
 listen unix:path;
 ```
 
-##### 对于server\_name，其指令相当简单
+对于server\_name，其指令相当简单
 ```
 *.example.com
 www.example.*
@@ -176,7 +182,7 @@ www.example.*
 ~^www(\d+).example\.(com)$
 ```
 
-##### location用于server内部，
+location用于server内部，
 ```
 location [ = | ~ | ~* | ^~ ] uri { ... }
 location @name { ... }
@@ -189,8 +195,9 @@ location @name { ... }
 ```
 
 # 四、反向代理服务器
-###简介
-##### Nginx 能够作为 一个反向代理来终结来自于客户端的请求，并且向上游服务器打开一个新请求
+### 简介
+
+Nginx 能够作为 一个反向代理来终结来自于客户端的请求，并且向上游服务器打开一个新请求
 ```conf
 #转发/newuri
 location /uri {
@@ -315,5 +322,5 @@ server {
 }
 ```
 
-# 反向代理高级使用
+# 五、反向代理高级使用
 ### 安全隔离
