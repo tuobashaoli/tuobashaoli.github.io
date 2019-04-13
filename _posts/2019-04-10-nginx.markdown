@@ -417,3 +417,37 @@ proxy\_buffers 240 4K
 每个活动的连接是240个4KB缓冲，就是`240*4*1024`
 假设系统能够分配给nginx的内存是768MB，就是`768*1024*1024`
 得到nginx可以支持`768*1024*1024 / 240*4*1024 = 819`个活动的连接
+
+##### 缓存数据
+
+```
+proxy_cache # 定义用于缓存的共享内存区域
+proxy_cache_bypass # 指定一个或者多个字符串变量，变量的值为非空或者非零将会导致响应从上游服务器获取而不是缓存
+proxy_cache_key #  该指令作为缓存 key 的一个字符串，用于存储或者获取缓存值。可能会使用变量，但是请注意避免缓存的同一个内容有多个副本
+proxy_cache_path # 指定－个放置缓存响应和共享内存 zone (keys_zone=name:size ）的目录，用于存储活动的 key 和响应的元数据
+```
+
+```conf
+http {
+
+proxy_temp_path /var/spool/nginx;
+
+# 缓冲数据的目录在/var/spool/nginx, 响应时间为6个小时，缓存大小为1G，共享内存名称叫CACHE，大小为10M，缓存文件目录层次为两层，缓存目录结构上对某个url的哈希值为 /var/spool/nginx/3/f1/4c16873c96c9db2090134be91cbf13
+proxy_cache_path /var/spool/nginx keys_zone=CACHE:10m levels=1:2 inactive=6h max_size=1g;
+server {
+location / {
+  include proxy.conf;
+
+  # 使用CACHE缓存数据
+  proxy_cache CACHE ;
+
+  # 对任何响应代码都缓存1天
+  proxy_cache_valid any 1d;
+
+  # 在访问上游服务器时返回error、timeout、invalid_header... ...，使用缓存的数据，当数据刷新后再被载入
+  proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
+  proxy_pass http://upstream;
+ }
+}
+}
+```
