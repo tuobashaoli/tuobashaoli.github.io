@@ -451,3 +451,68 @@ location / {
 }
 }
 ```
+
+##### 存储数据
+
+对于某些从来不会改变的数据，或者说长期不变的数据，没必要设置有效时间，可以直接保留在nginx服务器上，典型的比如说某些js、img、css文件。如果这些文件有更新，则需要手动上出nginx上的备份响应数据，然后才能更新
+
+```conf
+http {
+proxy_temp_path /var/www/tmp;
+
+  server {
+    # 定义存储目录
+    root /var/www/data
+
+    # 从root指定的目录中查找img文件，如果本地没有，访问@store，即从上游获取文件
+    location /img {
+      error_page 404 = @store;
+    }
+
+    location @store {
+      # 限制对该资源的直接访问
+      internal;
+
+      #开启存储
+      proxy_store on;
+
+      #定义这些文件的权限mode
+      proxy_store_access user:rw group:rw all:rw ;
+      proxy_pass http://upstream ;
+    }
+  }
+}
+```
+
+##### 压缩数据
+
+压缩上游的服务器的响应能够优化带宽，提升响应速度，gzip默认启用，但是某些浏览器可能不能够响应压缩内容
+
+```
+http {
+  #开启压缩
+  gzip on;
+
+  #对http1.1版本的请求生效
+  gzip_http_version 1.1;
+
+  #压缩等级为2级
+  gzip_comp_level 2;
+
+  #以下文件类型需要压缩
+  gzip_types text/plain text/css application/x-javascript text/xml application/xml application/xml+rss text/javascript  application/javascript application/json;
+
+  #对于microsoft ie6不压缩
+  gzip_disable msie6;
+}
+```
+
+```
+gzip # on/off
+gzip_buffers # 默认32 个 4KB 或者 16 个 8 KB,大小为128KB
+gzip_comp_level # 压缩等级 1-9,
+gzip_disable # User-Agents的正则表达式，凡是符合的都被禁用
+gizp_min_length # 最小需要压缩的长度，这个值与响应中的Content-Length进行比较决定是否需要压缩
+gzip_http_version # 高于该版本的请求可以压缩
+gzip_types # 除了默认的text/html，需要压缩的MIME类型
+```
