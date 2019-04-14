@@ -516,3 +516,57 @@ gizp_min_length # 最小需要压缩的长度，这个值与响应中的Content-
 gzip_http_version # 高于该版本的请求可以压缩
 gzip_types # 除了默认的text/html，需要压缩的MIME类型
 ```
+
+# 六、Nginx HTTP服务器
+
+nginx包含一个master进程和多个worker进程，这些进程都是单线程。master进程负责读取配置文件、处理套接字、派生woker进程、打开日志文件、编译嵌入式Perl脚本，master进程是一个可以通过处理信号响应来管理请求的进程。
+worker进程运行在忙碌的时间循环处理中，用于处理进入的连接。每一个nginx模块都被构建在worker中，所以任何qingiqu处理、过滤、处理代理的连接和更多操作都在worker进程中完成。
+还有少数辅助程序的nginx的master进程用于处理专门任务，cache loader负责worker进程使用缓存的元数据准备，cache manager 进程负责检查缓存条目即有效期。
+
+### HTTP核心模块
+
+##### 其他指令
+
+server
+
+```conf
+server
+server_name
+server_name_in_redirect # 在该上下文中，对任何nginx发布的重定向，该指令都使用server_name指令的第一个值激活
+server_tokens # 在错误信息中，该指令禁止发送nginx的版本号和server响应头
+```
+
+日志
+
+```
+access_log # 第一个参数是日志文件路经，第二个参数是log_format所定义的日志格式。如果写缓存用于记录日志，第三个参数指明写缓存大小，当第三个参数是gzip，那么缓冲日志将被动态压缩，无法使用log_format参数，且在构建nginx二进制时需要提供zlib库。最后一个参数时flush，表示缓冲日志数据写入到磁盘前能够在内存中停留的最大时间。
+log_format # 定义日志格式和该格式名称,格式中可以使用的变量如下，
+#$remote_addr, $http_x_forwarded_for 记录客户端IP地址
+#$remote_user 记录客户端用户名称
+#$request 记录请求的URL和HTTP协议
+#$status 记录请求状态
+#$body_bytes_sent 发送给客户端的字节数，不包括响应头的大小； 该变量与Apache模块mod_log_config里的“%B”参数兼容。
+#$bytes_sent 发送给客户端的总字节数。
+#$connection 连接的序列号。
+#$connection_requests 当前通过一个连接获得的请求数量。
+#$msec 日志写入时间。单位为秒，精度是毫秒。
+#$pipe 如果请求是通过HTTP流水线(pipelined)发送，pipe值为“p”，否则为“.”。
+#$http_referer 记录从哪个页面链接访问过来的
+#$http_user_agent 记录客户端浏览器相关信息
+#$request_length 请求的长度（包括请求行，请求头和请求正文）。
+#$request_time 请求处理时间，单位为秒，精度毫秒； 从读入客户端的第一个字节开始，直到把最后一个字符发送给客户端后进行日志写入为止。
+#$time_iso8601 ISO8601标准格式下的本地时间。
+#$time_local 通用日志格式下的本地时间。
+
+log_not_found #是否在错误日志中报告404错误，默认是
+log_subrequest #是否在访问日中中启用记录子请求，默认不记录
+open_log_file_cache #对于每一条日志记录，都将是先打开文件，再写入日志，然后关闭。可以使用open_log_file_cache来设置日志文件缓存(默认是off)，格式如下
+#max:设置缓存中的最大文件描述符数量，如果缓存被占满，采用LRU算法将描述符关闭。
+#inactive:设置存活时间，默认是10s
+#min_uses:设置在inactive时间段内，日志文件最少使用多少次后，该日志文件描述符记入缓存中，默认是1次
+#valid:设置检查频率，默认60s
+#off：禁用缓存
+#open_log_file_cache max=1000 inactive=20s valid=1m min_uses=2;
+```
+
+查找文件
