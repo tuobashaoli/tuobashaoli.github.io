@@ -608,3 +608,22 @@ limit_req_log_level #
 limit_req #以下表示采用requests限制每秒只处理一个请求，当每秒钟超过1个请求到来的时候，多余的请求存放在缓冲区，但是这个缓冲区只能存放10个请求，多了就返回503，nodelay表示会瞬时提供处理10 + 1 =11个请求的能力，如果没有nodelay，则缓冲区的请求就会排队等待
 # limit_req zone=requests burst=10 nodelay
 ```
+
+##### 约束访问
+
+```
+allow # 允许ip、网段或者值为all的访问
+deny # 禁止从ip、网段或者值为all的访问
+auth_basic # 默认值off表示不开启http基本认证，当值为一个字符串的时候，该字符串是作用域名
+auth_basic_user_file # 指定保存用户名和密码的文件，格式如下,其中的密码是htpasswd或者openss passwd加密后的字符串
+```
+
+```
+# commemt
+name1:passwd1
+name2:passwd2:comment
+```
+
+```
+satisfy # all | any ,默认值为all，对之前的认证无影响；当为any的时候，对allow允许的ip使用不认证，对deny拒绝的ip使用auth_basic认证
+```
