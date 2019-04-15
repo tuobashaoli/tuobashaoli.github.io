@@ -525,9 +525,9 @@ worker进程运行在忙碌的时间循环处理中，用于处理进入的连�
 
 ### HTTP核心模块
 
-##### 其他指令
+#### 其他指令
 
-server
+##### server
 
 ```conf
 server
@@ -536,7 +536,7 @@ server_name_in_redirect # 在该上下文中，对任何nginx发布的重定向�
 server_tokens # 在错误信息中，该指令禁止发送nginx的版本号和server响应头
 ```
 
-日志
+##### 日志
 
 ```
 access_log # 第一个参数是日志文件路经，第二个参数是log_format所定义的日志格式。如果写缓存用于记录日志，第三个参数指明写缓存大小，当第三个参数是gzip，那么缓冲日志将被动态压缩，无法使用log_format参数，且在构建nginx二进制时需要提供zlib库。最后一个参数时flush，表示缓冲日志数据写入到磁盘前能够在内存中停留的最大时间。
@@ -569,4 +569,42 @@ open_log_file_cache #对于每一条日志记录，都将是先打开文件，�
 #open_log_file_cache max=1000 inactive=20s valid=1m min_uses=2;
 ```
 
-查找文件
+##### 查找文件
+
+##### 域名解析
+
+```
+resolver #配置一个或者多个域名解析服务器，当使用变量指定上游服务器的时候，必须配置此变量
+resolver_timeout #dns查询超时时间
+```
+
+##### 客户端交互
+
+```
+default_type # 默认的MIME类型
+error_page # 定义一个错误码和对应uri
+etag # 对于静态资源该指令禁止自动产生ETAG相应头，默认值是on
+if_modified_since #off 忽略If-Modified-Since头；exact 精确匹配（默认值）；before 该参数修改响应时间小鱼或者等于If-Modified-Since
+ignore_invalid_headers #禁止忽略无效名字的头(默认值为 on)
+merge_slashes #该指令禁止移除多个斜线。 默认值为 on ，这意味着 Nginx 将会压缩两个或者更多个／字符为一个
+recursive_error_pages # 启用error_page指令，实现多个重定向，但是默认值是off
+types #多数情况下用/etc/nginx/mime.types即可，不用配置该选项
+underscores_in_headers #如果使用了on，则在请求头中启用使用下划线字符，当使用了默认值off，那么讲根据ignore_invalid_headers处理
+```
+
+##### limit
+
+```
+limit_conn # 指定共享内存区域（ limit_conn_zone 配置），并且指定每个键值对的最大连接数，以下表示根据ip地址限制，定义一个叫connections为10m的
+#limit_conn $binary_remote_addr zone=connections:10m
+limit_conn_log_level # 在连接到达限制时，此时将会产生错误日志，该参数用于设置错误级别，可选值 info | notice | warn |error
+limit_conn_zone # 设置限制规则、区域名称及分配的内存大小
+limit_conn_status # 默认值503，超出limit_conn_status后，返回该客户端错误码
+limit_rate # 限制客户端下载速率，字节/秒
+limit_rate_after # 完成设定的字节数后，启用limit_rate限制
+limit_req_zone # 指定共享内存区域，但是多一个参数表明配置在受到限制之前，请求数速率，以下表示每秒处理1个请求
+# limit_req_zone $binary_ remote _addr zone=requests:10m rate=1r/s;
+limit_req_log_level #
+limit_req #以下表示采用requests限制每秒只处理一个请求，当每秒钟超过1个请求到来的时候，多余的请求存放在缓冲区，但是这个缓冲区只能存放10个请求，多了就返回503，nodelay表示会瞬时提供处理10 + 1 =11个请求的能力，如果没有nodelay，则缓冲区的请求就会排队等待
+# limit_req zone=requests burst=10 nodelay
+```
