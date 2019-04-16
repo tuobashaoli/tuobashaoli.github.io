@@ -52,3 +52,30 @@ cpu    us  用户进程执行时间的百分比
 ```
 %nice 已调整优先级的用户进程的CPU时间
 ```
+
+##### uptime
+
+显示1、5、15分钟内运行队列的平均进程数，如果一个进程满足以下条件则会位于运行队列中
+
++ 没有等待IO操作
++ 没有主动进入等待状态
++ 没有被停止
+
+### 内存性能评估
+
+##### free
+
+`free -h` 以方便查看的单位显示内存使用情况
+
+##### sar
+
+`sar -r 1`每隔一秒输出一次内存占用情况
+
+```
+kbmemfree 和free的free基本一致，不包括buffer和cache
+kbmemused 和free的used基本一致，包括buffer和cache
+%memused kbmemused和内存总量(不包括swap)的一个百分比
+kbbuffers和kbcached  就是free命令中的buffer和cache
+kbcommit 保证当前系统所需要的内存
+%commit 这个值是kbcommit与内存总量(包括swap)的一个百分比
+```
