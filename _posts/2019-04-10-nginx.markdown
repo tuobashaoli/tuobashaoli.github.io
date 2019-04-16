@@ -525,8 +525,6 @@ worker进程运行在忙碌的时间循环处理中，用于处理进入的连�
 
 ### HTTP核心模块
 
-#### 其他指令
-
 ##### server
 
 ```conf
@@ -626,4 +624,75 @@ name2:passwd2:comment
 
 ```
 satisfy # all | any ,默认值为all，对之前的认证无影响；当为any的时候，对allow允许的ip使用不认证，对deny拒绝的ip使用auth_basic认证
+```
+
+### 流媒体文件
+
+在编译时添加模块 --with-http_flv_module 用于flv文件，--with-http_mp4-module 用于H.264/AAC文件。
+
+```
+flv # 在该location中激活flv模块
+mp4 #在该location中激活mp4模块
+mp4_buffer_size # 设置投递mp4文件的初始缓冲大小
+mp4_max_buffer_size # 设置处理mp4元数据使用的最大缓冲
+```
+
+### 预定义变量
+
+```
+$arg_name
+$args
+$binary_remote_addr
+$content_length
+$content_length
+$content_type
+$cookie_name
+$document_root
+$document_uri
+$host
+$hostname
+$http_name
+$https
+$is_args
+$limit_rate
+$nginx_version
+$pid
+$query_string
+$realpath_root
+$remote_addr
+$remote_port
+$request
+$request_body
+$request_body_file
+$request_completion
+$request_filename
+$request_method
+$request_uri
+$scheme
+$sent_http_name
+$server_addr
+$server_name
+$server_port
+$server_protocol
+$status
+$tcpinfo_rtt
+$tcpinfo_rttvar
+$tcpinfo_snd_cwnd
+$tcpinfo_rcv_space
+$uri
+```
+
+### SPDY和HTTP/2
+
+现在对HTTP/2的支持还不够完善，所以基本上用不到。
+编译时使用` --with-http_v2_module ` 激活对HTTP/2的支持
+
+```
+http2_chunk_size #设置响应提的最大值
+http2_idle_timeout #指定连接关闭后闲置的时间
+http2_max_concurrent_streams #设置在单个连接中活动的http/2流的数量
+http2_max_field_size
+http2_max_header_size
+http2_recv_buffer_size
+http2_recv_timeout
 ```
