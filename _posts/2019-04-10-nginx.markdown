@@ -622,6 +622,39 @@ name1:passwd1
 name2:passwd2:comment
 ```
 
+实际上，一般不会需要管理员手动编写这样一个密码文件，都是使用ldap认证方式，需要在编译nginx的时候添加nginx-auth-ldap模块。这样才能在配置时使用ldap\_server配置。一个典型的配置如下
+
+```
+ldap_server openldap {
+
+        url ldap://192.168.150.20:389/ou=xxx,ou=xxx,ou=xxx,ou=xxx,ou=xxx,dc=xxx,dc=net?mail?sub?(objectClass=xxxxx);
+
+        binddn "cn=xxx,ou=admin,dc=xxx,dc=net";
+
+        binddn_passwd "xx";
+
+        group_attribute memberuid;
+
+        group_attribute_is_dn on;
+
+        require valid_user;
+}
+...
+
+server{
+
+...
+
+auth_ldap "Restricted Space";
+auth_ldap_servers openldap;
+
+...
+
+}
+```
+
+当然，对于更为实际的情况是，当nginx用作反向代理的时候，所代理的服务一般都拥有自己一套账户系统，不需要nginx再做用户认证
+
 ```
 satisfy # all | any ,默认值为all，对之前的认证无影响；当为any的时候，对allow允许的ip使用不认证，对deny拒绝的ip使用auth_basic认证
 ```
