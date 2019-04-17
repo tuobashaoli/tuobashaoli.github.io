@@ -120,3 +120,34 @@ rxmcst/s 每秒钟接收的多播数据包
 `nslookup  www.baidu.com`查看www.baidu.com的ip地址
 
 `netstat -tunlp` 以数字numeric形式显示tcp和udp报文，并显示监听端口和pid
+
+`netstat -r`或者`route -n` 显示路由信息
+
+### TOP
+
+![avatar](/assets/images/top.png)
+
+##### cpu使用情况
+---
+
+us | sy  | ni | id | wa | hi | si | st
+用户进程占用的cpu时间 | 系统进程占用的cpu时间 | 调整过nice值的cpu占用时间 | 空闲的cpu时间 | 用于等待io的时间 | 处理硬件中断的cpu时间 |	处理软件中断占用cpu时间 | 虚拟机占用的cpu时间
+
+---
+
+##### 内存使用情况
+
+
+##### 进程状态
+
+---
+
+PID | USER | PR | NI | VIRT | RES | SHR | S | %CPU | %MEM | TIME+ | COMMAND
+进程的id | 进程所属用户 | 进程调度优先级 | 进程nice值 | 使用的虚拟内存 | 驻留内存大小 | 共享内存 | 进程状态 | 自从上一次更新时到现在任务所使用的CPU时间百分比 | 进程使用的可用物理内存百分比 | 任务启动后到现在所使用的全部CPU时间，精确到百分之一秒 |  运行进程所使用的命令
+
+---
+
+关于进程的优先级：对于PR值为rt，说明该进程是实时进程，此时可以使用chrt命令查看进程，反之，说明改进程时非实时进程，可以使用nice命令设置或者更改进程的nice值，nice值越小，说明优先级越高
+内存： 驻留的内存是使用的非交换的物理内存，RES = CODE + DATA，虚拟内存 VIRT = SWAP + RES
+
+---
