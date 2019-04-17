@@ -7,8 +7,6 @@ published: True
 title: "linux performance command"
 ---
 
-# linux性能信息获取的shell命令
-
 ### CPU
 
 ##### vmstat
