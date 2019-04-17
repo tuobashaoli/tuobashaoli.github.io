@@ -102,7 +102,7 @@ svctm 系统处理每次请求的平均时间，不包括在请求队列中消�
 
 ### 网络性能评估
 
-`sar -n DEV|EDEV|SOCK|FULL 2 3` 查看网络接口|网络错误统计|套接字|所有信息，每个2每秒打印一次，打印3次
+`sar -n DEV|EDEV|SOCK|FULL 2 3` 查看网络接口\|网络错误统计\|套接字\|所有信息，每个2每秒打印一次，打印3次
 
 
 ```
@@ -111,10 +111,12 @@ rxpck/s 每秒钟接收的数据包
 txpck/s 每秒钟发送的数据包
 rxkB/s 每秒钟接收的字节数
 txkB/s 每秒钟发送的字节数
-rxcmp/s 每秒钟接收的亚索数据包
-txcmp/s 每秒中发送的数据包
+rxcmp/s 每秒钟接收的压缩数据包
+txcmp/s 每秒中发送的压缩数据包
 rxmcst/s 每秒钟接收的多播数据包
 %ifutil
 ```
 
 `nslookup  www.baidu.com`查看www.baidu.com的ip地址
+
+`netstat -tunlp` 以数字numeric形式显示tcp和udp报文，并显示监听端口和pid
