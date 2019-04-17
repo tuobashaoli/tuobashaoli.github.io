@@ -79,3 +79,42 @@ kbbuffers和kbcached  就是free命令中的buffer和cache
 kbcommit 保证当前系统所需要的内存
 %commit 这个值是kbcommit与内存总量(包括swap)的一个百分比
 ```
+
+##### 磁盘IO性能评估
+
+`sar -d 1 -p` 每隔一秒打印块设备的io信息
+
+![avatar](/assets/images/sar-d.PNG)
+
+```
+tps 每秒从物理磁盘IO的次数
+rd_sec/s 每秒读扇区的次数
+wr_sec/s 每秒写扇区的次数
+avgrq-sz 平均每次设备io操作的数据大小，以扇区为单位
+avgqu-sz 磁盘请求队列的平均长度
+await 从请求磁盘操作到系统完成处理，每次请求的平均消耗时间，包括请求队列的等待时间，单位是毫秒
+svctm 系统处理每次请求的平均时间，不包括在请求队列中消耗的时间，当svctm接近await的时候，说明几乎没有等待时间，IO性能很好
+%util IO请求占CPU百分比，越大，说明越饱和
+```
+
+`iostat -d 1`
+
+
+##### 网络性能评估
+
+`sar -n DEV|EDEV|SOCK|FULL 2 3` 查看网络接口|网络错误统计|套接字|所有信息，每个2每秒打印一次，打印3次
+
+
+```
+IFACE 网络接口
+rxpck/s 每秒钟接收的数据包
+txpck/s 每秒钟发送的数据包
+rxkB/s 每秒钟接收的字节数
+txkB/s 每秒钟发送的字节数
+rxcmp/s 每秒钟接收的亚索数据包
+txcmp/s 每秒中发送的数据包
+rxmcst/s 每秒钟接收的多播数据包
+%ifutil
+```
+
+`nslookup  www.baidu.com`查看www.baidu.com的ip地址
