@@ -61,4 +61,42 @@ CLB和ALB支持多路复用
 
 使用最长前缀匹配流量
 
+##### Internet网关
+
+##### 仅出口Internet网关
+
+仅出口 Internet 网关是一种横向扩展、支持冗余且高度可用的 VPC 组件，它能够实现从 VPC 中的实例经由 IPv6 到 Internet 的出站通信，并防止 Internet 发起与您的实例的 IPv6 连接。
+
+##### NAT
+
+您可以使用网络地址转换 (NAT) 网关允许私有子网中的实例连接到 Internet 或其他 AWS 服务，但阻止 Internet 发起与这些实例的连接。
+
++ 指定NAT网管所在的公有子网之中
++ 指定NAT网关的弹性IP地址
++ 更新私有子网的关联的路由表，将Internet绑定流量指向该网关
+
+##### NAT实例
+
+通过AMI启动NAT实例，相比较NAT网关，NAT实例支持自定义配置端口转发，随时更新弹性IP，等
+
+##### DHCP选项集
+
+非默认的VPC中启用的实例属于私有实例，即没有公有ipv4地址，默认被分配一个无法解析的主机名。
+DHCP选项集支持的选项如下
+
++ 域名服务器DNS，最多四台，默认指定的是AmazonProvidedDNS，169.254.169.253
++ 域名
++ 网络时间协议服务器 NTP
++ NetBios名称服务器
++ NetBios节点类型
+
+##### DNS
+
+Amazon 提供的私有（内部）DNS 主机名解析为实例的私有 IPv4 地址，并对 us-east-1 区域采用 ip-private-ipv4-address.ec2.internal 形式，对其他区域采用 ip-private-ipv4-address.region.compute.internal 形式（其中 private-ipv4-address 是反向查找 IP 地址）。
+对于 us-east-1 区域，公有（外部）DNS 主机名采用 ec2-public-ipv4-address.compute-1.amazonaws.com 形式，对于其他区域，则采用 ec2-public-ipv4-address.region.compute.amazonaws.com 形式。
+
+##### 弹性IP
+
+弹性IP可以与VPC中的任何实例或者网关接口关联，借助弹性 IP 地址，可以迅速将地址重新映射到 VPC 中的另一个实例，从而屏蔽实例故障。注意，将弹性 IP 地址与网络接口关联，而不直接与实例关联的优势在于，只需一步，即可将网络接口的所有属性从一个实例移至另一个。
+
 [VPC](https://docs.aws.amazon.com/zh_cn/vpc/latest/userguide/what-is-amazon-vpc.html)
