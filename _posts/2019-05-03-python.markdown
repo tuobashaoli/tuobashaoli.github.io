@@ -41,7 +41,6 @@ globals()["foo"]()
 也可以使用operator模块的methodcaller调用函数
 
 ```python
-
 class Foo():
   def foo(self):
     print "foo"
@@ -52,3 +51,57 @@ getattr(f,"foo")()
 from operator import methodcaller
 methodcaller("foo")(f)
 ```
+
+### \_\_init\_\_ 和 \_\_new\_\_
+
+`__init__`是初始化方法，创建对象后，就立刻被默认调用了，可接收参数。`__init__`中的self参数就是`__new__`返回的对象
+
+`__new__`必须要有返回值，返回实例化出来的实例
+
+### is 和 ==
+
+is是检查对象的标示符是否一致，==是检查俩个对象是否相等,`a is b`就是`id(a) == id(b)`,`a == b`就是`a.__eq__(b)`
+
+### 内存驻留
+
+交互式命令行，对于只包含字母、数字、下划线组成的字符串，python会自动保留一个副本，当创建新的字符串的时候就直接指向该副本,此外的字符串不会驻留在内存中，
+
+```
+>>> a = "hello world"
+>>> b = "hello world"
+>>> a is b
+False
+```
+
+### 可变对象和不可变对象
+
+可变对象在创建后可改变但是地址不会改变，不可变对象创建后不能改变。字典和列表是可变对象，int、字符串、元组和float是不可变对象
+
+### join和+
+
+在连接列表中的字符串的时候，join会优先计算需要多大的内存，一次性申请，使用+就会一步一步申请，性能比前者差。
+
+### with语句和上下文管理器
+
+在执行with语句时，会调用对象的`__enter__`和`__exit__`方法，拥有这俩个方法的对象，就是上下文管理器
+
+```python
+class ContextManager(object):
+  def __enter__(self):
+    print "enter it"
+
+  def __exit__(self,exception_type,exception_value,traceback):
+    print "exit it"
+    if exception_type is None:
+      print "without exception"
+    else:
+      print "with exception %s"% exception_value
+      return False
+
+with ContextManager():
+  print "testing"
+```
+
+### finally
+
+当try语句块中含有break、continue、return的时候，在离开try之前，finally的语句会被执行
