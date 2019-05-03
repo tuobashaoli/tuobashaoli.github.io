@@ -1,0 +1,54 @@
+---
+categories: blog
+date: '2019-05-03 13:11:18'
+description: it is so pythonic
+layout: post
+published: True
+title: "something about python"
+---
+
+### 使用函数名称调用函数(方法)
+
+##### eval
+
+eval直接将函数字符串名称转换成函数对象
+
+##### locals globals
+
+locals和globals以字典形式分别返回当前位置的全部局部变量和全局变量，这就包括了定义的方法
+
+```
+>>> locals()
+{'__builtins__': <module '__builtin__' (built-in)>, '__name__': '__main__', 'foo': <function foo at 0x7f4c71cfa5f0>, '__doc__': None, '__package__': None}
+```
+
+```python
+def foo():
+  print "foo"
+
+eval("foo")()
+
+locals()["foo"]()
+globals()["foo"]()
+```
+
+##### getattr
+
+当通过对象调用函数的时候，可以使用getattr
+
+##### methodcaller
+
+也可以使用operator模块的methodcaller调用函数
+
+```python
+
+class Foo():
+  def foo(self):
+    print "foo"
+
+f = Foo()
+getattr(f,"foo")()
+
+from operator import methodcaller
+methodcaller("foo")(f)
+```
