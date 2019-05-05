@@ -1,0 +1,161 @@
+---
+title: "动态规划"
+date: '2019-05-05 18:27:18'
+published: True
+categorie: blog
+layout: post
+---
+
+# 动态规划算法
+
+## 核心
+
+记住已经求过的解
+
+## 两种形式
+
+### 自顶向下的备忘录法
+
+对于斐波那契数列，通常的做法是如下
+
+```python
+def fib(n):
+  if n == 0:
+    return 0
+  return 1 if n ==1 else fib(n -1) + fib(n - 2)
+```
+
+这就造成了一个问题，在执行`fib(7)`的时候，实际上也执行了`fib(6)...`等，再到执行`fib(8)`的时候，又要讲之前重新执行过的`fib(7)...`都再执行一遍，造成了浪费。根据**记住已经求过的解**，解法可如下
+
+```python
+def Fib(n):
+  if n <= 0:
+    return n
+  mem = []
+  for i in range(n+1):
+    mem.append(-1)
+  return fib(n,mem)
+
+def mem(n,mem):
+  if mem[n] != -1:
+    return mem[n]
+  if n <= 2:
+    mem[n] = 1
+  else:
+    mem[n] = fib(n -1,mem) + fib(n -2,mem)
+
+  return mem[n]
+```
+
+这样，在计算过Fib(n)后，之前的所有斐波那契数都被记录下来，不用在递归计算，直接查询就可以获得了，节省了时间。也就是说，**自顶向下就是先计算后面的值，过程中保留前面的值，然后在需要前面的值的时候直接查询**
+
+### 自底向上
+
+自顶向下还是使用了递归，如果不使用递归，那就是先计算出1,2，再计算出3
+
+```python
+def fib(n):
+  if n <= 1:
+    return n
+
+  mem_i_2,mem_i_1 = 0,1
+  for i in range(2,n+1):
+    mem_i = mem_i_2 + mem_i_1
+    mem_i_2 = mem_i_1
+    mem_i_1 = mem_i
+
+  return mem_i
+```
+
+**自底向上就是先计算前面的值，然后再用这些值计算后面的值**
+
+### 钢条切割问题
+
+递归解法
+
+```python
+def cut(p,n):
+  # p是长度和价格的对应的字典
+  if n ==0:
+    return 0
+  q = -1
+  for i in range(1,n+1):
+    q = max(q,p[i]+cut(p,n-i))
+  return q
+```
+
+自顶向下
+
+```python
+def Cut(p,n):
+  if n == 0:
+    return 0
+  mem = {}
+  for i in range(n+1):
+    mem[i] = -1
+  return cut(p,n,mem)
+  
+
+def cut(p,n,mem):
+  q = -1
+  if mem[n] != -1:
+    return mem[n]
+  else:
+    for i in range(1.n +1):
+      q = max(q,p[i]+cut(p,n-i,mem))
+  mem[n]=q
+  return q
+```
+
+自底向上
+
+```python
+def cut(p,n):
+  mem = {}
+  for i in range(1,n+1):
+    q = -1
+    for j in range(1,i+1):
+      q = max(q,p[j]+mem[i-j])
+    mem[i] = q
+
+  return q
+```
+
+### 原理
+
+#### 最优子结构
+
+如果一个问题的解的结构包含其子问题的最优解，称此问题具有最优子结构
+
+#### 重叠子问题
+
+如果递归算法反复求解相同的子问题，称具有重叠子问题
+
+#### 经典模型
+
+##### 线性模型
+
+过河问题
+
+假设i个人过河的最少时间为opt[i],当还剩一个人未过河，opt[i] = opt[i-1] + a[1] + a[i]，当还剩俩个人未过河，opt[i] = opt[i-2] + a[1] + a[i] + 2\*a[2]，所以
+
+`opt[i] = min{opt[i] + a[1] + a[i],opt[i -2] + a[1] + 2 * a[2]}`
+
+##### 区间模型
+
+给定一个长度为n，n <= 1000 的字符串A，求插入多少个字符让它成为一个回文字符串
+
+回文是明显的子结构特征，当X是回文的时候，那么‘aXa’必然也是回文，`d[i][j]`表示`A[i][j]`这个子串成为会需要的字符数，那么当`A[i] == A[j]`，`d[i][j] == d[i+1][j-1]`，当`A[i] != A[j]`的时候，
+
+1. 在`A[j]`的后面添加一个字符`A[i]`
+2. 在`A[i]`的前面添加一个字符`A[j]`
+
+`d[i][j] = min{d[i+1][j],d[i][i-1] } + 1`
+
+##### 背包模型
+
+背包问题
+
+`f[i][v]`表示前i种物品签好放入一个容量为v的背包可以获得的最大价值，决策为第i个物品在前i-1个物品放置完毕后，选择放还是不放
+
+`f[i][v] = max{f[i-1][v],f[i-1][v - Ci] + Wi}`
