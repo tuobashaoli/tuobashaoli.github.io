@@ -6,23 +6,23 @@ published: True
 layout: post
 ---
 
-#### EC2的EBS卷和实例存储卷的区别是什么？EBS卷支持动态缩容扩容么？单EBS卷最大支持多大空间？
+#### EC2
 
 EBS卷创建的实例支持停止和重启，且可以有多种方法恢复；实例存储卷创建的实例不支持停止和重启，一旦停止，无法恢复该实例。EBS卷支持动态扩容和缩容。单EBS卷最大支持16T空间
 
-#### 什么是 IAM角色，为什么在EC2上最好使用IAM角色来管理对AWS服务的访问？
+#### IAM
 
 IAM 角色是可在账户中创建的一种具有特定权限的 IAM 身份。IAM 角色类似于 IAM 用户，可在不共享您的安全证书的情况下允许其他用户、服务和应用程序使用您的 Amazon VPC 资源。角色可提供临时权限供应用程序在调用其他AWS资源时使用。当用户启动EC2实例时，可指定要与实例关联的IAM角色。然后，实例上运行的应用程序可使用角色提供的临时凭证对API请求进行签名。
 
 [IAM策略结构](https://docs.aws.amazon.com/zh_cn/AWSEC2/latest/UserGuide/iam-policy-structure.html)
 
-#### 简单介绍S3中的存储桶和对象键
+#### S3
 
 存储于 Amazon S3 中的每个对象都存储在存储桶中，对象键是创建对象时指定的键名称，它在存储桶中唯一地标识该对象。
 
 [存储对象](https://docs.aws.amazon.com/zh_cn/AmazonS3/latest/dev/storage-class-intro.html)
 
-#### 简单介绍ELB和AutoScaling
+#### ELB和AutoScaling
 
 ELB是负载均衡器，包括ALB（应用负载均衡器，支持HTTP负载均衡）、NLB（网络负载均衡器、支持TCP负载均衡）、CLB（经典负载均衡器、支持HTTP和TCP负载均衡），AutoScaling是用于保证有一定数量的ec2实例，也可以动态扩展示例数量，保证在高负载的时候服务的性能。
 
@@ -212,3 +212,17 @@ FIFO 队列的死信队列也必须为 FIFO 队列。同样，标准 队列的�
 对于单个消息，设置该消息的消息定时器，默认0秒，最大15分钟，让消息进入队列后的这段时间内对用户不可见。FIFO队列不支持单个消息上的计时器
 
 [Amazon SQS](https://docs.aws.amazon.com/zh_cn/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html)
+
+#### Lambda
+
+[Lambda](https://docs.aws.amazon.com/zh_cn/lambda/latest/dg/welcome.html)
+
+通过 AWS Lambda，您可以在无服务器环境中运行函数，使用您选择的语言来处理事件。您的函数的每个实例都在一个隔离的执行上下文中运行，并且一次处理一个事件。当函数完成处理事件时，它会返回响应，并且 Lambda 会将响应发送到另一个事件。Lambda 会自动扩展您的函数的实例数，以处理更多数量的事件。
+
++ 函数：脚本或者程序
++ 运行时：类似容器，提供函数运行的环境
++ 层：包含库、自定义运行时或其他依赖项的ZIP存档
++ 事件源：可以触发函数并执行其逻辑的服务，比如Amazon SNS
++ 下游资源：比如DynamoDB、Amazon S3存储桶，一旦触发此服务，Lambda函数就会调用
++ 日志流：Lambda 会自动监控您的函数调用并向 CloudWatch 报告指标
++ AWS SAM：一个用于定义无服务器应用程序的模型
