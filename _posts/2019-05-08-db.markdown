@@ -1,0 +1,25 @@
+---
+title: "数据库"
+date: "2019-05-08 21:44:18"
+published: False
+layout: post
+categories: blog
+---
+
+# Mysql
+
+### 主键、超键、候选键、外键
+
+### 数据库事务的四个特性
+
+原子性、一致性、隔离性、持久性
+
+### 视图
+
+视图只包含使用时动态检索数据的查询
+
+### drop、delete、truncate
+
+### 索引
+
+通常使用的是B树和B+树
