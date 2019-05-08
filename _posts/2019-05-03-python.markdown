@@ -164,3 +164,33 @@ class Foo(metaclass=SingletonType):
     def __init__(self,name):
         self.name = name
 ```
+
+### 协程
+
+协程通过中断实现，在执行一个协程的时候，可以随时中断，去执行另一个协程;协程是在一个线程中执行，没有线程开换的开销，不需要多线程的锁机制，不存在写变量冲突，控制共享资源不加锁。
+
+python中使用生成器实现对协程的支持
+
+```python
+def consumer():
+    r = ''
+    while True:
+        n = yield r
+        if not n:
+            return
+        print('[CONSUMER] Consuming %s...' % n)
+        r = '200 OK'
+
+def produce(c):
+    c.send(None)
+    n = 0
+    while n < 5:
+        n = n + 1
+        print('[PRODUCER] Producing %s...' % n)
+        r = c.send(n)
+        print('[PRODUCER] Consumer return: %s' % r)
+    c.close()
+
+c = consumer()
+produce(c)
+```
