@@ -129,7 +129,13 @@ adduser $username --ingroup sudo --disabled-password --gecos "" && echo "$userna
 
 ##### sshpass
 
+`ssh-keygen -N "" -C "" -f ~/.ssh/id_rsa`
+
 `sshpass -p $passwd ssh-copy-id -u $username -i ~$username/.ssh/id_rsa.pub $user@$ip`
+
+##### /dev/urandom
+
+`head -n 20 | md5sum | cut -c 1-10`
 
 shell脚本
 =========

@@ -78,7 +78,7 @@ Shell进程所能使用的最大虚拟内存限制
 users=`cat namelist.txt`
 for user in $users;
 do
-  adduser $user --gecos ""  --disabled-password |chpasswd;chage -d0 $user
+  adduser $user --gecos ""  --disabled-password &&echo "$user:$passwd"|chpasswd;chage -d0 $user
 done
 ```
 
