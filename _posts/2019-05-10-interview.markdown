@@ -145,3 +145,6 @@ curl -X POST ${jenkins_url}/job/${job_name}/build/buildWithParameters  -d param1
 `cat file|tr a b`
 `${path//a/b}``${path/a/b}`
 
+### repo生成带commitid的manifest
+
+`repo manifest -o manifest.xml -r`
