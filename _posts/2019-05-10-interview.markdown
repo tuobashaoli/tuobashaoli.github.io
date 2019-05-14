@@ -1,10 +1,12 @@
 ---
-title: "futumianshi"
+title: "interview"
 date: "2019-05-10 20:30:18"
 layout: post
 categories: blog
 published: True
 ---
+
+# futu
 
 ### ulimit
 
@@ -101,3 +103,45 @@ x：可执行权限，可以cd进入
 ### k8s的pod的实现原理
 
 ### docker的原理
+
+# oubo
+
+### 如何在shell中启动jenkins的job
+
+#### 1.使用curl
+
+无参数
+
+```
+curl -X POST ${jenkins_url}/job/${job_name}/build --user ${username}:${passwd}
+```
+
+使用默认参数
+
+```
+curl -X POST ${jenkins_url}/job/${job_name}/build/buildWithParameters  --user ${username}:${passwd}
+```
+
+设置参数
+
+```
+curl -X POST ${jenkins_url}/job/${job_name}/build/buildWithParameters  -d param1=value1&&param2=value2 --user ${username}:${passwd}
+```
+
+#### 2.使用python-jenkins模块
+
+#### 3.使用jenkins CLI
+
+### 如何批量的给jenkins添加节点
+
+#### 使用python-jenkins
+
+假设本机的ssh公钥已经配置到所有节点authorized\_keys中，如果没有，使用`ssh-copy-id -u $username -i ~$username/.ssh/id_rsa.pub $sshusername@$ip`将公钥复制过去
+`create_node(name, numExecutors=2, nodeDescription=None, remoteFS='/var/lib/jenkins', labels=None, exclusive=False, launcher='jenkins.LAUNCHER_COMMAND', launcher_params={})`
+
+### 替换文本
+
+`sed -i "s/a/b/g" file`
+`cat file|tr a b`
+`${path//a/b}``${path/a/b}`
+
