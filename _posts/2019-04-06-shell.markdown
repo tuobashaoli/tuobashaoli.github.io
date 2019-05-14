@@ -121,7 +121,15 @@ sed -n '/last/,5p' file
 
 ##### 添加用户
 
-adduser $username --ingroup sudo --disabled-password --gecos "" && echo "$username;$passwd" |chpasswd;chage -do $username
+adduser $username --ingroup sudo --disabled-password --gecos "" && echo "$username;$passwd" |chpasswd;chage -d0  $username
+
+##### awk合并俩个文件
+
+`awk 'NR==FNR{a[NR]=$2;b[NR]=$0;next}{for(i in a){if (a[i]==$1){print b[i]" "$2}}}' hel lo`
+
+##### sshpass
+
+`sshpass -p $passwd ssh-copy-id -u $username -i ~$username/.ssh/id_rsa.pub $user@$ip`
 
 shell脚本
 =========
