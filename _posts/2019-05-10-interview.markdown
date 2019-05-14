@@ -104,6 +104,26 @@ x：可执行权限，可以cd进入
 
 ### docker的原理
 
+核心技术支撑：namespace、control groups、union filesystem
+
+#### namespace
+
+命名空间用于分离进程树、网络接口、挂载点和进程通信，Linux 的命名空间机制提供了以下七种不同的命名空间，包括 CLONE\_NEWCGROUP、CLONE\_NEWIPC、CLONE\_NEWNET、CLONE\_NEWNS、CLONE\_NEWPID、CLONE\_NEWUSER 和 CLONE\_NEWUTS。
+
+通过`CLONE_NEWPID`,从init进程创建dockerd，再有dockerd进程创建docker-containerd进程，再由docker-containerd创建具体的容器进程，在创建进程的命名空间时，也会创建用户、网络、IPC、UTS、NS的命名空间，实现和宿主机的隔离
+
+一般docker容器都需要网络通信，这时，默认会创建一个虚拟网卡docker0，然后给每个容器分配ip，并讲将docker0的地址设置成网关，docker0通过iptables与宿主机的网卡连接。
+
+docker容器也需要访问宿主机文件，需要把容器内部的一些文件挂载出来。Linux系统的默认目录是/开始的，chroot可以改变当前系统的根目录，限制用户的权力，在新的目录下不能访问旧系统的整个结构文件。
+
+#### CGroups
+
+CGroups用于隔离宿主机上的物理资源，ＣＰＵ、内存、磁盘ＩＯ、网络带宽，在`/sys/fs/cgroup/`文件夹中，都包含一个docker的子文件夹，每新建一个容器，就会多一个以容器hash为名的文件夹，里面存放着各种配置文件，限制容器对硬件资源的占用
+
+#### UnionFS
+
+docker镜像本质上是一个压缩包，解压后和一般linux根目录下的内容基本一样。在使用Dockerfile构建镜像的时候，每一个命令都会在已知层上创建一个新的层。一个容器就是一个镜像加上一个可读可写的层，在同一个镜像上添加不同的可读可写层，做到了同一个镜像启动多个容器。
+
 # oubo
 
 ### 如何在shell中启动jenkins的job
