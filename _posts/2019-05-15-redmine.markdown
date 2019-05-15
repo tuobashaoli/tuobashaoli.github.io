@@ -1,0 +1,12 @@
+---
+title: "redmine源码阅读"
+layout: post
+date: "2019-05-15 15:02:18"
+categories: blog
+published: True
+tags: "redmine"
+---
+
+### 源码结构
+
+这部分网上已经有分析了，直接参考[这篇文章](https://blog.csdn.net/weixin_42463677/article/details/80704799)
