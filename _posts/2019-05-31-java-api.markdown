@@ -1,0 +1,37 @@
+---
+title: "JAVA API"
+date: '2019-05-31 10:21:18' 
+layout: post 
+categories: blog
+published: True
+---
+
+### String
+
+##### hashCode()
+
+每从前向后 每个字符的ascii码×31+后面一个字符的ascii码，一次迭代
+
+```
+h 104
+e 101
+l 108
+
+所以 "hel".hashCode() 是 （104×31+101）×31+108 = 103183
+```
+
+### StringBuilder
+
+### StringBuffer
+
+##### toStringCache
+
+返回最后一次toString的缓存值，和之前的toString中共享char[]内存，节省内存空间
+
+##### newCapacity(int var1)
+
+将当前容量翻倍并加2，如果超过`2^31-1`，则OOM,如果大于`2^31-1-8`,则设置为`2^31-1-8`,数组需要8字节存储数组长度
+
+##### capacity()
+
+初始化时存放int则容量就是int的长度，存放String或者CharSequence的时候，会加16作为容量
