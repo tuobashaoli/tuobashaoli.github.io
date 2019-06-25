@@ -24,23 +24,23 @@ l 108
 
 比较字符串的内容是否相同
 
-重写equals方法，就要重写hashcode方法，因为俩个对象equals为True，那么·x.hashcode()==y.hashcode()·也必须为True；如果俩个对象的hashcode不相同，那么equals也一定为False。在Object类中，equals和·==·是完全一致的，也就是默认情况下，equals就是比较俩个对象的内存地址，但是，一些类可以重写equals方法，比如说String类，equals方法是用于判断俩个字符串的值是否相同，但是默认的hashcode使用的是对象的地址进行计算所得的值，如果不修改hashcode，那么俩个内容相同的字符串，由于在内存中的地址不同，则hashcode就不相同。
+重写equals方法，就要重写hashcode方法，因为俩个对象equals为True，那么`x.hashcode()==y.hashcode()`也必须为True；如果俩个对象的hashcode不相同，那么equals也一定为False。在Object类中，equals和`==`是完全一致的，也就是默认情况下，equals就是比较俩个对象的内存地址，但是，一些类可以重写equals方法，比如说String类，equals方法是用于判断俩个字符串的值是否相同，但是默认的hashcode使用的是对象的地址进行计算所得的值，如果不修改hashcode，那么俩个内容相同的字符串，由于在内存中的地址不同，则hashcode就不相同。
 
 针对Map类，在使用put方法或者隔天方法对Map容器进行操作时，都需要根据键对象的hashcode计算存储位置，如果重写了equals方法，导致俩个对象的equals结果为True，但是没有重写hashcode，导致hashcode比较结果为False，比如，在HashMap中，get方法如下
 
-···
+```
 public V get(Object key) {
      Node<K,V> e;
      return (e = getNode(hash(key), key)) == null ? null : e.value;
 }
-···
+```
 
 其中·hash(key)·就是使用key的hashcode。
 
-···
+```
 Set存储的是不重复的对象，一句hashCode和equals进行判断，所以Set存储的对象必须重写这俩个方法
 如果自定对象作为Map的键，那么必须重写hashCode和equals
-···
+```
 
 ### StringBuilder
 
