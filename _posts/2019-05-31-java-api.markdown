@@ -24,6 +24,8 @@ l 108
 
 比较字符串的内容是否相同
 
+重写equals方法，就要重写hashcode方法，因为俩个对象equals为True，那么·x.hashcode()==y.hashcode()·也必须为True；如果俩个对象的hashcode不相同，那么equals也一定为False。比如说String类，重写equals方法，判断俩个字符串的值是否相同，但是默认的hashcode使用的是对象的地址进行计算所得的值，如果不修改hashcode，那么俩个内容相同的字符串，由于在内存中的地址不同，则hashcode就不相同。
+
 ### StringBuilder
 
 ### StringBuffer
