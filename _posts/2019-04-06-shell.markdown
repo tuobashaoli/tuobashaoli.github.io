@@ -137,6 +137,21 @@ adduser $username --ingroup sudo --disabled-password --gecos "" && echo "$userna
 
 `head -n 20 | md5sum | cut -c 1-10`
 
+##### eval
+
+###### 变量的值转化为变量名称
+
+```
+File1=hello
+File2=world
+File3=ruok
+for i in 1 2 3
+do
+    file=`eval echo '$'File$i`
+    echo $file
+done
+```
+
 shell脚本
 =========
 
