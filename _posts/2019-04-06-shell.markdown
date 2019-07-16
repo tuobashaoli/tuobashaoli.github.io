@@ -74,7 +74,9 @@ last \| tee last.list  \| cut -d " " -f 1
 
 ##### 字符转换：
 
-tr '\[a-z\]' '\[A-Z\]'
+tr '\[a-z\]' '\[A-Z\]' \# 将所有的小写字母替换成大写
+
+sed -i "s/hello/world/g" file
 
 tr -d ':' \#删除冒号
 
