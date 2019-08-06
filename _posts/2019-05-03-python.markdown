@@ -106,6 +106,16 @@ with ContextManager():
 
 当try语句块中含有break、continue、return的时候，在离开try之前，finally的语句会被执行
 
+### python3字符串和字节
+
+没有前缀的字符都是Unicode，Unicode字符串中存在无法使用字节表示的抽象文本，如果Unicode字符串需要存储在硬盘或者网络中，需要将其编码为字节序列，有以下俩种方法
+
+···
+str.encode(encoding="utf-8",errors="strict")
+bytes(source,encoding,errors)
+···
+
+
 ### 单例模式
 
 ##### 使用模块
@@ -216,4 +226,80 @@ os.chdir(path)
 os.path.isfile(path)
 os.path.isdir(path)
 os.path.exists(path)
+```
+
+### 装饰器
+
+#### 用类去做装饰器
+
+可以用于非参数化装饰器
+
+```python
+class DecoratorAsClass:
+	def __init__(self,function):
+		self.func = function
+
+	def __call__(self,*args,**kwargs):
+		result = self.func(*args,**kwargs)
+		print "hehe"
+		return result
+
+def func():
+	print "hello"
+
+dac = DecoratorAsClass(func)
+dac() # hello,hehe
+```
+
+#### 参数化装饰器
+
+```python
+def repeat(number=3):
+	def actual_repeat(func):
+		def wrap(*args,**kwargs):
+			for i in range(number):
+				result = func(*args,**kwargs)
+			return result
+		return wrap
+	return actual_repeat
+
+# 即使使用默认参数，也需要有括号
+@repeat()
+def foo():
+	print "hehe"
+```
+
+#### 保留内省
+
+以上的装饰器会让原函数时区注释文档和函数名称，使用functools可解决问题
+
+```python
+from functools import wraps
+
+def preseving_decorator(func):
+	@wraps(func)
+	def wrap(*args,**kwargs):
+		return func(*args,**kwargs)
+	return wrap
+```
+
+#### 使用场景
+
+- 检查参数
+- 缓存：将输出保存在某个变量中，在一定时间内，如果再输入一样的参数，那么输出直接从变量中查询
+- 代理：比如flask使用装饰器做路由分发，django使用装饰器做账号认证
+- 上下文
+
+
+### 类装饰器
+
+调用对象自己就是调用call方法
+
+```python
+class Animal(object):
+	def __call__(self,words):
+		print "hello",words
+
+cat = Animal()
+cat("hehe") # hello,hehe
 ```
