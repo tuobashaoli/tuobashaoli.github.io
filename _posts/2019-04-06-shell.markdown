@@ -64,8 +64,10 @@ sort -nru \#number reverse uniq
 cat /etc/passwd |sort -t ':' -k 3  #用冒号分割，用每行中分割后的第三个字符排序
 ```
 
+去重
 uniq -ic \# ignore count
 
+统计
 wc -lwm \#line word 字符数
 
 ##### 双重导向：
@@ -82,7 +84,7 @@ tr -d ':' \#删除冒号
 
 col -x \#将tab装换成space
 
-join \[-ti12\] file1 file2 \#joinm默认使用空格分割，并且对比俩个文件第一个字段数据，如果相同，则将俩行数据连成一行，并且自一个字段放在第一个
+join \[-ti12\] file1 file2 \#join默认使用空格分割，并且对比俩个文件第一个字段数据，如果相同，则将俩行数据连成一行，并且自一个字段放在第一个
 
 ``` {.shell}
 join -t ':' /etc/passed /etc/shadow
