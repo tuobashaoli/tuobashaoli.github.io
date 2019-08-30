@@ -110,11 +110,44 @@ with ContextManager():
 
 没有前缀的字符都是Unicode，Unicode字符串中存在无法使用字节表示的抽象文本，如果Unicode字符串需要存储在硬盘或者网络中，需要将其编码为字节序列，有以下俩种方法
 
-···
+```
 str.encode(encoding="utf-8",errors="strict")
 bytes(source,encoding,errors)
-···
+```
 
+
+### 列表推导
+
+```python
+[i for i in range(10) if i%2 == 0]
+```
+
+### enumerate
+
+```python
+for index,value in enumerate(["a","b","c"]):
+    print index,value
+```
+
+### zip()
+
+```python
+for item in zip([1,2,3],[5,6,7]):
+    print item
+```
+
+### collections
+
+collections中日工除了集合、元素、列表、字典意外的数据类型
+
+```
+namedtuple
+deque       双端队列
+ChainMap   创建多个映射的单一视图，python2似乎没有
+Counter 字典的子类，用于对可哈希对象进行计数
+OrderedDict 字典子类，可以保留元素的添加顺序
+defaultdict 字典子类，可以调用用户自定义的工厂函数设置缺失值
+```
 
 ### 单例模式
 
