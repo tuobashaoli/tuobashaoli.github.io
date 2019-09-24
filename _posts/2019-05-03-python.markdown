@@ -138,7 +138,7 @@ for item in zip([1,2,3],[5,6,7]):
 
 ### collections
 
-collections中日工除了集合、元素、列表、字典意外的数据类型
+collections中包含除了集合、元素、列表、字典意外的数据类型
 
 ```
 namedtuple
@@ -336,3 +336,98 @@ class Animal(object):
 cat = Animal()
 cat("hehe") # hello,hehe
 ```
+
+### 迭代器
+
+实现了迭代器协议的容器对象
+
+- __next__ 返回容器下一个元素
+- __iter__ 返回迭代器本身
+
+```python
+class CountDown(object):
+	def __init__(self, step):
+		self.step = step
+
+	def __next__(self):
+		if step <= 0:
+			raise StopIteration
+		self.step -= 1
+		return self.step
+
+	def __iter__(self):
+		return self
+for element in CountDown(4):
+    print(element)
+```
+
+### yield
+
+使用next获取yield的值
+
+```python3
+def fibonacci():
+	a,b= 0,1
+	while True:
+		yield b
+		a,b = b,z + b
+
+fib = fibonacci()
+next(fib)
+next(fib)
+next(fib)
+```
+
+使用send向yield发送参数
+
+```python3
+def psy():
+    print("okok")
+    while True:
+        answer = (yield)
+        if answer is not None:
+            if answer.endswith('?'):
+                print("dont ask more")
+            elif 'good' in answer:
+                print("nonono")
+            else:
+                print("whatever")
+
+p = psy()
+next(p)
+p.send("hehe?")
+p.send("not that good")
+p.send("jkl")
+```
+
+### super多重继承的问题
+
+在多重继承中，在初始化的时候容易产生问题
+
+```python
+class A:
+    def __init__(self):
+        print("A",end="")
+        super().__init__()
+
+class B:
+    def __init__(self):
+        print("B",end="")
+        super().__init__()
+
+class C(A,B):
+    def __init__(self):
+        print("C",end="")
+        A.__init__(self)
+        B.__init__(self)
+
+C() # 输出是 CABB，因为在A中调用了super().__init__()
+```
+
+最佳实践
+
+- 避免多继承
+- super使用必须一致，要么全部用super，要么全不用
+- 显示的继承object，为了避免代码在python2中混用新式类和旧式类
+- 调用父类的时候查看层次结构，使用__mro__
+
