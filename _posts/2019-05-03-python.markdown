@@ -431,3 +431,73 @@ C() # 输出是 CABB，因为在A中调用了super().__init__()
 - 显示的继承object，为了避免代码在python2中混用新式类和旧式类
 - 调用父类的时候查看层次结构，使用__mro__
 
+### 描述符
+
++ __set__(self,obj,type=None)
++ __get__(self,obj,value)
++ __delete__(self,obj)
+
+实现了`__get__()`和`__get__()`的描述符是数据描述符，如果只实现了`__get__()`那就是非数据描述符
+
+在每次查找对象的属性的时候，`__getattribute__()`，会按以下顺序查找属性
+
+1. 该属性是否是实例的类对象的数据描述符
+2. 如果不是，那就查看该属性能否在实例的`__dict__`中找到
+3. 查看该属性是否是实例的类对象的非数据描述符
+
+python已经使用描述符将类函数绑定为实例方法
+
+#### 延迟求值属性
+
+```python3
+class InitOnAccess(object):
+	def __init__(self,klass,*args,**kwargs):
+		self.klass = klass
+		self.args = args
+		self.kwargs = kwargs
+		self._initialized = None
+
+	def __get__(self,instance,owner):
+		if self._initialized is None:
+			print('initialized!')
+			self._initialized = self.klass(*self.args,**self.kwargs)
+		else:
+			print('cached')
+		return self._initialized
+
+class MyClass():
+	lazy_bone = InitOnAccess(list,"argument")
+
+m = MyClass()
+m.lazy_bone
+m.lazy_bone
+```
+
+### property
+
+将属性连接到方法上
+
+```python3
+class Rectangle(object):
+
+    def __init__(self,x1,y1,x2,y2):
+        self.x1,self.x2,self.y1,self.y2 = x1,x2,y1,y2
+
+    @property
+    def width(self):
+        return self.x2 - self.x1
+
+    @width.setter
+    def width(self,value):
+        self.x2 = self.x1 + value
+
+
+rec = Rectangle(1,5,2,6)
+print(rec.width)
+rec.width = 10
+print(rec.width)
+```
+
+### __slots__
+
+会限制类的实例中可以添加的属性
