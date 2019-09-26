@@ -501,3 +501,48 @@ print(rec.width)
 ### __slots__
 
 会限制类的实例中可以添加的属性
+
+
+### 元类
+
+python中一切皆对象，是对象就可以在运行时进行修改。如下图
+![avatar](/assets/images/metaclass.png)
+
+任何一个实例是一个对象，是对象就是某一个类实例化而生成的；类也是对象，那么也是某一个类实例化生成的，最终是type的实例化，
+
+类都有父类，最终的父类是object类。
+
+可以使用type生成一个实例(类)，
+
+```python3
+klass = type('MyClass',(object,),{'method':lambda x:print(1)})
+
+k = klass()
+k.method() # 1
+```
+
+自定元类的参数与type一致，并且返回另一个类对象即可
+
+```
+name:保存在__name__属性中的类的名称
+bases:父类的列表，成为__bases__属性
+namespace:包含主题空间的映射，将成为__dict__属性
+```
+
+元类的模板如下
+
+```python3
+class MetaClass(type):
+	def __new__(mcs,name,bases,namespace):
+		return super().__new__(mcs,name,bases,namespace)
+
+	@classmethod
+	def __prepare__(mcs,name,bases,**kwargs):
+		return super().__prepare__(name,bases,**kwargs)
+
+	def __init__(cls,name,bases,namespace,**kwargs):
+		super().__init__(name,bases,namespace)
+
+	def __call__(cls,*args,**kwargs):
+		return super().__call__(*args,**kwargs)
+```
