@@ -239,3 +239,18 @@ done
 ```
 
 默认read读取的变量到\$REPLY
+
+Linux工具
+=========
+
+###mount
+
+查看已挂载的文件系统
+
+```
+fs_spec on fs_file type fs_vfstype (fs_mntopts)
+fs_spec：挂载的块设备或远程文件系统
+fs_file：文件系统的挂载点
+fs_vfstype：文件系统的类型
+fs_mntopts：与文件系统相关的更多选项，不同的文件系统其选项也不太一样
+```
