@@ -243,7 +243,7 @@ done
 Linux工具
 =========
 
-###mount
+### mount
 
 查看已挂载的文件系统
 
@@ -253,4 +253,18 @@ fs_spec：挂载的块设备或远程文件系统
 fs_file：文件系统的挂载点
 fs_vfstype：文件系统的类型
 fs_mntopts：与文件系统相关的更多选项，不同的文件系统其选项也不太一样
+```
+
+### pushd popd
+
+pushd会进入某个目录，但是会将进入后的目录存储到dirs中，之后可以用popd回到之前的目录
+
+```shell
+pushd ~/work/
+pushd ~/work/office
+pushd ~/work/office/job
+dirs
+popd
+popd
+popd
 ```
