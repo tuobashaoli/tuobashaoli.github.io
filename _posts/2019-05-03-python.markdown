@@ -533,16 +533,33 @@ namespace:包含主题空间的映射，将成为__dict__属性
 
 ```python3
 class MetaClass(type):
+        # 创建具体的类对象
 	def __new__(mcs,name,bases,namespace):
 		return super().__new__(mcs,name,bases,namespace)
 
+	# 创建namespace对象
 	@classmethod
 	def __prepare__(mcs,name,bases,**kwargs):
 		return super().__prepare__(name,bases,**kwargs)
 
+	# 初始化，此时已经生成类对象cls
 	def __init__(cls,name,bases,namespace,**kwargs):
 		super().__init__(name,bases,namespace)
 
+	# 覆写类实例创建和初始化的默认方式
 	def __call__(cls,*args,**kwargs):
 		return super().__call__(*args,**kwargs)
+```
+
+实际编写元类的如下
+
+```python3
+class RevealingClass(metaclass=RevealingMeta):
+	def __new__(cls):
+		return super().__new__(cls)
+
+	def __init__(self):
+		super().__init__()
+
+# 对应元类的初始化过程 __prepare__  --> __new__ --> __init__
 ```
