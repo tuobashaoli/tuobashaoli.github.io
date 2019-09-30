@@ -1,0 +1,48 @@
+---
+layout: post
+title:  "Postgreql!"
+date:   2019-09-29 18:46:18
+categories: blog
+description: it is for postgres
+published: true
+---
+
+### 常用命令
+
+```shell
+#连接数据库，默认的用户名是postgres，不是root，默认的数据库是postgres
+psql -h 127.0.0.1 -p 5432 -U postgres -d postgres
+
+#查看数据库
+\l
+
+#使用某个数据库
+\c postgres
+
+#查看所有的表
+\d
+
+#查看所有的用户
+\dg
+
+#创建用户
+create role username;
+
+#设置密码
+alter role username with password 'passwd';
+
+#创建数据库
+create database dbname;
+
+#修改数据库的属主
+alter database "dbname" to username;
+
+#增加权限
+grant all on database "dbname" to username;
+
+#设置登录权限
+alter user username login;
+
+#删除数据库
+drop database dbname;
+```
