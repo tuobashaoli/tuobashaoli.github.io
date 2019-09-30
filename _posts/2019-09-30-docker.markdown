@@ -9,8 +9,10 @@ published: true
 
 ### 常用命令
 
+##### 通过ssh挂载到远程主机的目录
+
 ```
-# 使用数据卷驱动，下载vieux/sshfs
+# 先数据卷驱动，下载vieux/sshfs
 docker plugin install --grant-all-permissions vieux/sshfs
 
 #创建数据卷
@@ -18,4 +20,12 @@ docker volume create --driver vieux/sshfs -o sshcmd=username@172.17.122.24:/work
 
 #使用该数据卷
 docker run -d --name nginx -v sshvolume:/usr/share/nginx/html nginx
+```
+
+##### 通过nfs挂载远程主机的目录
+
+```
+#创建数据卷
+docker volume create --driver local -o type=nfs -o o=addr=192.168.1.1,rw -o device=:/path/to/dir nfsvolume
+docker run -d --name nginx -v nfsvolume:/usr/share/nginx/html nginx
 ```
