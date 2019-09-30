@@ -1,11 +1,31 @@
 ---
 layout: post
-title:  "Postgreql!"
+title:  "Postgresql!"
 date:   2019-09-29 18:46:18
 categories: blog
 description: it is for postgres
 published: true
 ---
+
+### 部署方式
+
+由于有官方Docker镜像，使用Docker运行
+
+```
+#下载镜像
+docker pull postgres:10.10
+
+# 初次启动服务，如果需要将目录/var/lib/postgresql挂载出来到特定的目录,比如/work/postgresql，这个目录可以是空的，那么需要先创建数据卷
+docker volume create --driver local -o type=none -o device /work/postgresql -o o=bind postgres-volume
+
+# 然后可以将该数据卷挂载到容器，这样容器内的/var/lib/postgresql的自动回复制到/work/postgresql中，并且挂载出来
+docker run -d --name postgres -p 5432:5432 -v postgres-volume:/var/lib/postgresql -e POSTGRES_PASSWORD=passwd postgres:10.10
+
+#如果已经有目录，比如$HOME/postgresql
+docker run -d --name postgres -p 5432:5432 -v $HOME/postgresql:/var/lib/postgresql -e POSTGRES_PASSWORD=passwd postgres:10.10
+
+#当然也可以先不挂载目录启动容器，手动将目标目录/var/lib/postgresql复制出来到/work/postgresql，然后重启挂载目录启动容器
+```
 
 ### 常用命令
 
