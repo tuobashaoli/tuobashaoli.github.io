@@ -16,7 +16,7 @@ published: true
 docker pull postgres:10.10
 
 # 初次启动服务，如果需要将目录/var/lib/postgresql挂载出来到特定的目录,比如/work/postgresql，这个目录可以是空的，那么需要先创建数据卷
-docker volume create --driver local -o type=none -o device /work/postgresql -o o=bind postgres-volume
+docker volume create --driver local -o type=none -o device=/work/postgresql -o o=bind postgres-volume
 
 # 然后可以将该数据卷挂载到容器，这样容器内的/var/lib/postgresql的自动回复制到/work/postgresql中，并且挂载出来
 docker run -d --name postgres -p 5432:5432 -v postgres-volume:/var/lib/postgresql -e POSTGRES_PASSWORD=passwd postgres:10.10
