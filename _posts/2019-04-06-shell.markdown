@@ -268,3 +268,26 @@ popd
 popd
 popd
 ```
+
+### samba
+
+修改samb配置文件`/etc/samba/smb.conf`,添加如下代码
+
+```
+[data] #对外的路径
+comment=Share Folder with username and password #说明文本
+path=/work/ #需要给其他机器挂载的本机目录，需要提交创建
+public=yes
+writeable=yes
+valid users=platform #使用的账户，需要在本机已存在这个用户，并且使用smbpasswd -a platform将这个用户添加到samba用户列表中
+create mask=0775
+directory mask =0775
+available=yes
+browseable=yes
+```
+
+当其他机器需要挂载这个目录的时候
+
+```
+mount.cifs //172.17.121.110/data /work -o username=platform,password=passwd
+```
