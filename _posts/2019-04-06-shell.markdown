@@ -187,6 +187,8 @@ echo "123.123*55.9" |bc
 
 test \[-efd\]
 
+test \[-s\] 如果文件存在且不为空
+
 test \[-rwx\]
 
 test \[-eq -gt -lt -ne -ge -le\]
