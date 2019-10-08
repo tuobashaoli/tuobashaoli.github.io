@@ -36,3 +36,9 @@ docker run -d --name nginx -v nfsvolume:/usr/share/nginx/html nginx
 docker volume create --driver local -o type=none -o device=/work/volume -o o=bind localvolume
 docker run -d --name nginx -v localvolume:/usr/share/nginx/html nginx
 ```
+
+##### 删除所有未被使用的数据卷
+
+```
+docker volume prune -f
+```
