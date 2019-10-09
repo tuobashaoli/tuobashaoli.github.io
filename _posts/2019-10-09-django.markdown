@@ -1,0 +1,111 @@
+---
+layout: post
+title:  "Django"
+date:   2019-10-09 15:50:18
+categories: blog
+description: something about django
+published: true
+---
+
+# a little django
+
+### 部署方式
+
+官方提供了django的镜像，使用容器部署，注意，`/work/django/onlysite`是一个已经编写好的django项目
+
+```
+docker volume create --driver local -o type=none -o device=/work/django/onlysite -o o=bind djangovolume
+docker run -d --name django -p 8000:8000 -v djangovolume:/usr/src/app -w /usr/src/app django:1.10.4-python3 bash -c "python3 manage.py runserver 0.0.0.0:8000"
+
+docker volume create --driver local -o type=none -o device=/work/postgres -o o=bind postgresvolume
+docker run -d --name postgres -p 5432:5432 -v postgres:/var/lib/postgresql/ -e POSTGRES_PASSWORD=passwd postgres:10.10
+```
+
+### 创建项目
+
+#### 创建项目Project
+
+```
+django-admin.py startproject onlysite
+```
+
+
+#### 在项目里创建应用APP
+
+```
+# 在/work/django/onlysite目录中执行
+python3 manage.py startapp blog
+```
+
+#### 配置settings
+
+编写`/work/django/onlysite/onlysite/settings.py`
+
+```python3
+ALLOWED_HOSTS = ['*'] #允许所有IP访问
+
+INSTALLED_APPS = [
+... ...
+'blog', #添加该应用
+]
+
+# 配置数据库
+DATABASES = {
+    'default':{
+        'ENGINE':'django.db.backends.postgresql_psycopg2',
+	'NAME':'blog',
+	'USER':'django',
+	'PORT':'5432',
+	'HOST':'127.0.0.1'
+    }
+}
+```
+
+#### 迁移数据库
+
+```
+python3 manage.py makemigrationd
+python3 manage.py migrate
+```
+
+#### 创建超级管理员
+
+```
+python3 manage.py createsuperuser
+```
+
+#### 编写models
+
+```
+# blog/models.py
+
+class Column(models.Model):
+    name = models.CharFields('栏目名称'，max_length=256)
+    slug = mdoels.CharField('栏目网址',max_length=256,db_index=True)
+    intro = models.TextField('栏目简介'，default='')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '栏目' # 给Column起一个可读的名字
+	verbose_name_plural = '栏目' # 以上的名字的复数
+	ordering = [ 'name' ]  #返回的记录按照name字段进行排序
+
+class Article(models.Model):
+    column = models.ManyToManyField(Column, verbose_name='归属栏目') #生成article_column表，用于存储对应关系
+    title = models.CharField('标题',max_length=256)
+    slug = models.CharField('网址',max_length=256,db_index=True)
+    author = models.ForignKey('auth.User',blank=True,null=True,verbose='作者')
+
+    content = models.TextField('内容',default='',blank=True)
+    published = models.BooleanField('正式发布', default=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = '教程'
+        verbose_name_plural = '教程'
+
+```
