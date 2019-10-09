@@ -7,8 +7,6 @@ description: something about django
 published: true
 ---
 
-# a little django
-
 ### 部署方式
 
 官方提供了django的镜像，使用容器部署，注意，`/work/django/onlysite`是一个已经编写好的django项目
@@ -77,6 +75,7 @@ python3 manage.py createsuperuser
 #### 编写models
 
 ```
+
 # blog/models.py
 
 class Column(models.Model):
@@ -108,4 +107,91 @@ class Article(models.Model):
         verbose_name = '教程'
         verbose_name_plural = '教程'
 
+```
+
+编写完成之后迁移数据库
+
+#### 添加后台功能
+
+编辑`blog/admin.py`
+
+```
+from .models import Column,Article
+
+class ColumnAdmin(admin.ModelAdmin):
+    list_display = ('name','slug','intro')
+
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ('title','slug','author')
+
+admin.site.register(Column,ColumnAdmin)
+admin.site.register(Aricle,ArticleAdmin)
+```
+
+#### 添加DjangoUeditor富文本编辑器
+
+下载DjangoUeditor3，放在blog的同级目录
+
+在settings.py中添加DjangoUeditor这个应用
+
+```
+INSTALLED_APPS = (
+    ...
+     
+    'DjangoUeditor',
+)
+```
+
+在urls.py中添加路由
+
+```
+from django.conf.urls import include
+from DjangoUeditor import urls as ueditor_urls
+from django.conf import settings
+
+urlpatterns = [
+...
+url(r'^ueditor/',include(ueditor_urls))
+]
+
+if settings.DEBUG:
+    from django.conf.urls.static import static
+    urlpatterns += static(
+        settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
+
+添加上传图片的地址
+
+修改settings.py
+
+```
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+# 公共的 static 文件，比如 jquery.js 可以放这里，这里面的文件夹不能包含 STATIC_ROOT
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "common_static"),
+)
+
+# upload folder
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+```
+
+修改`blog/models.py`
+
+```
+from DjangoUeditor.models import UEditorField
+
+
+
+class Article(models.Model):
+    ...
+
+    #仅修改 content 字段
+    content = UEditorField('内容', height=300, width=1000,
+        default=u'', blank=True, imagePath="uploads/images/",
+        toolbars='besttome', filePath='uploads/files/')
+
+    ...
 ```
