@@ -266,15 +266,15 @@ def column_detail(request, column_slug):
 编写`blog/templates/blog/column.html`
 
 ```shell
-{% extends "base.html" %}
+\{\% extends "base.html" \%\}
 
-{% block title %}
-{{ column.title }}
-{% endblock title %}
+\{\% block title \%\}
+\{\{ column.title \}\}
+\{\% endblock title \%\}
 
-{% block content %}
-栏目简介：{{ column.intro }}
+\{\% block content \%\}
+栏目简介：\{\{ column.intro \}\}
 栏目文章列表：
 还需要完善
-{% endblock content %}
+\{\% endblock content \%\}
 ```
