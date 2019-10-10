@@ -204,14 +204,14 @@ class Article(models.Model):
 
 在项目的根目录中的创建目录templates，编写base.html文件
 
-```xml
+```shell
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}欢迎光临{% endblock title %} - 自强学堂</title>
+    <title>{% block title %}欢迎光临{% endblock title %}</title>
 
     <!-- Bootstrap -->
     <link href="http://apps.bdimg.com/libs/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet">
@@ -234,7 +234,7 @@ class Article(models.Model):
     <div>
         <div>
             {% block content %}
-            <h1>自强 新闻网</h1>
+            <h1>首页</h1>
             {% endblock content %}
         </div>
     </div>
@@ -256,7 +256,7 @@ url(r'^column/(?P<column_slug>[^/]+)/$',blog_views.column_detail,name='column'),
 
 在`blog/views.py`中添加该处理函数
 
-```
+```python
 def column_detail(request, column_slug):
     column = Column.objects.get(slug=column_slug)
     return render(request, 'blog/column.html', {'column': column})
@@ -264,7 +264,7 @@ def column_detail(request, column_slug):
 
 编写`blog/templates/blog/column.html`
 
-```
+```shell
 {% extends "base.html" %}
 
 {% block title %}
