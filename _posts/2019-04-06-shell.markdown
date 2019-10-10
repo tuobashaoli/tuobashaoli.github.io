@@ -48,6 +48,14 @@ cat >hello << "eof"
 cat a.txt | paste - b.txt
 ```
 
+##### 获取管道命令中的各个返回值
+
+```shell
+cat a.txt | paste - b.txt
+rst1=${PIPESTATUS[0]}
+rst2=${PIPESATTUS[1]}
+```
+
 ##### 截取命令：
 
 cut -d '分割字符' -f index,index2
