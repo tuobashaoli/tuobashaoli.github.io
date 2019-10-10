@@ -211,8 +211,7 @@ class Article(models.Model):
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {% raw %}
-    <title>{% block title %}欢迎光临{% endblock title %}</title>
+    <title>\{\% block title \%\}欢迎光临\{\% endblock title \%\}</title>
 
 
     <!-- Bootstrap -->
@@ -224,21 +223,20 @@ class Article(models.Model):
       <script src="http://apps.bdimg.com/libs/html5shiv/3.7/html5shiv.min.js"></script>
       <script src="http://apps.bdimg.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
-    {% block css %}
+    \{\% block css \%\}
 
-    {% endblock css %}
+    \{\% endblock css \%\}
 
-    {% block js %}
+    \{\% block js \%\}
 
-    {% endblock js %}
-    {% endraw %}
+    \{\% endblock js \%\}
   </head>
   <body>
     <div>
         <div>
-            {% block content %}
+            \{\% block content \%\}
             <h1>首页</h1>
-            {% endblock content %}
+            \{\% endblock content \%\}
         </div>
     </div>
 
