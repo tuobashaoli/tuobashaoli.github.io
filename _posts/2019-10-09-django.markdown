@@ -204,7 +204,7 @@ class Article(models.Model):
 
 在项目的根目录中的创建目录templates，编写base.html文件
 
-```html
+```xml
 <!DOCTYPE html>
 <html>
   <head>
