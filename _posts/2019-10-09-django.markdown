@@ -211,7 +211,9 @@ class Article(models.Model):
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% raw %}
     <title>{% block title %}欢迎光临{% endblock title %}</title>
+
 
     <!-- Bootstrap -->
     <link href="http://apps.bdimg.com/libs/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet">
@@ -229,6 +231,7 @@ class Article(models.Model):
     {% block js %}
 
     {% endblock js %}
+    {% endraw %}
   </head>
   <body>
     <div>
