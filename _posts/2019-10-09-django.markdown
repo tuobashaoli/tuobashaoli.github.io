@@ -253,6 +253,7 @@ class Article(models.Model):
 
 ```
 url(r'^column/(?P<column_slug>[^/]+)/$',blog_views.column_detail,name='column'),
+url(r'^article/(?P<article_id>\d+)/(?P<article_slug[^/]+>)/$',blog_view.article_detail,name='article'),
 ```
 
 在`blog/views.py`中添加该处理函数
@@ -261,6 +262,10 @@ url(r'^column/(?P<column_slug>[^/]+)/$',blog_views.column_detail,name='column'),
 def column_detail(request, column_slug):
     column = Column.objects.get(slug=column_slug)
     return render(request, 'blog/column.html', {'column': column})
+
+def article_detail(request, article_id,article_slug):
+    article = Article.objects.get(id=article_id)
+    return render(request, 'blog/article.html', {'article':article})
 ```
 
 编写`blog/templates/blog/column.html`
@@ -276,5 +281,21 @@ def column_detail(request, column_slug):
 栏目简介：\{\{ column.intro \}\}
 栏目文章列表：
 还需要完善
+\{\% endblock content \%\}
+```
+
+编写`blog/templates/blog/article.html`
+
+```
+\{\% extends "base.html" \%\}
+
+\{\% block title \%\}
+\{\{ article.title \}\}
+\{\% endblock title \%\}
+
+\{\% block content \%\}
+\{\% autoescape off \%\}
+栏目简介：\{\{ article.content \}\}
+\{\% endautoescape \%\}
 \{\% endblock content \%\}
 ```
