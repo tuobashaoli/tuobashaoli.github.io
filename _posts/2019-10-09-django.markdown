@@ -299,3 +299,13 @@ def article_detail(request, article_id,article_slug):
 \{\% endautoescape \%\}
 \{\% endblock content \%\}
 ```
+
+#### 再次编辑后台
+
+编写`blog/admin.py`
+
+```
+class ArticleAdmin(admin.ModelAdmin):
+    search_fields = ('title','content')
+    list_filter = ('pub_date','title')
+```
