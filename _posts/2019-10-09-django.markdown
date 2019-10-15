@@ -309,3 +309,62 @@ class ArticleAdmin(admin.ModelAdmin):
     search_fields = ('title','content')
     list_filter = ('pub_date','title')
 ```
+
+### 编写登陆注册逻辑
+
+编写urls
+
+```
+url(r'^blog/accounts/login/$',blog_views.login)
+url(r'^blog/accounts/invalid/$',blog_views.login_invalid)
+url(r'^blog/accounts/register/$',blog_views.register)
+```
+
+编写视图函数
+
+```
+def login(request):
+    if request.method == "GET":
+        return render(request,"login.hmtl")
+    if request.method == "POST":
+        username = request.POST.get('username','')
+	password = request.POST.get('password','')
+	user = auth.authenticate(username=username,password=password)
+	if user is not None and user.is_active:
+	    auth.login(request,user)
+	    return redirect("/blog/index.html")
+	else:
+	    return redirect("/blog/accounts/invalid")
+
+def login_invalid(request):
+    return render(request,"login_invalid.html")
+
+def register(request):
+    if request.method == "GET":
+        form = UserCreationForm()
+	return render(request,"register.html",{'form':form})
+    if request.method == "POST":
+        name = request.POST.get('username')
+	password = request.get('password1')
+	User.objects.create_user(username=name,password=password)
+	return redirect("/blog/accounts/login")
+```
+
+编写页面
+
+login\.html
+
+```
+
+```
+
+login\_invalid\.html
+
+```
+```
+
+register\.html
+
+```
+```
+
