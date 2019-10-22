@@ -433,9 +433,9 @@ C() # 输出是 CABB，因为在A中调用了super().__init__()
 
 ### 描述符
 
-+ __set__(self,obj,type=None)
-+ __get__(self,obj,value)
-+ __delete__(self,obj)
++ \_\_set\_\_(self,obj,type=None)
++ \_\_get\_\_(self,obj,value)
++ \_\_delete\_\_(self,obj)
 
 实现了`__get__()`和`__get__()`的描述符是数据描述符，如果只实现了`__get__()`那就是非数据描述符
 
