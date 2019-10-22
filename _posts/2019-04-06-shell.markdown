@@ -42,7 +42,7 @@ cat >hello << "eof"
 
 ##### 管道符：
 
-| ，在管道符右边，使用减号 - 来指代管道符左边的输出，比如
+`|` ，在管道符右边，使用减号 - 来指代管道符左边的输出，比如
 
 ``` {.shell}
 cat a.txt | paste - b.txt
@@ -106,6 +106,16 @@ paste -d "|" /etc/passwd /etc/shadow #使用竖线做分隔符
 ```
 
 expand -t 10 file \#用10个空格替换tab键
+
+##### 变量名称切割
+
+```shell
+var=hello
+echo ${var##*l}  #o
+echo ${var#*l}  #lo
+echo ${var%l*}  #hel
+echo ${var%%l*} #he
+```
 
 ##### 分割文件：
 
