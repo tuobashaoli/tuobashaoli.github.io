@@ -88,6 +88,12 @@ tr '\[a-z\]' '\[A-Z\]' \# 将所有的小写字母替换成大写
 
 sed -i "s/hello/world/g" file
 
+`sed -i "/<\/manifest>/,/defaulte remote/d" xml` 删除相关行
+
+`sed -i '/<\/manifest>/i <project=\"hehe\">' xml` 在某一行上面添加一行
+
+`sed -i '/<manifest>/a <remote="gerrit.com">' xml` 在某一行下面添加一行
+
 tr -d ':' \#删除冒号
 
 col -x \#将tab装换成space
