@@ -20,6 +20,22 @@ categories: blog
 
 ### drop、delete、truncate
 
+```
+drop table table_name; #直接删除表，不可恢复
+
+delete from table_name (where);#删除表中的内容，可以恢复rollback，不会删除索引，返回删除的记录数
+
+truncate table table_name; #删除表格中的所有数据，不可恢复，删除后悔重建索引，返回0/-1
+```
+
+在删除存在主外键约束的表格的内容的时候，可以先取消主外键约束，删除之后就可以恢复主外键约束
+
+```
+SET FOREIGN_KEY_CHECKS=0;
+
+SET FOREIGN_KEY_CHECKS=1;
+```
+
 ### 索引
 
 通常使用的是B树和B+树
