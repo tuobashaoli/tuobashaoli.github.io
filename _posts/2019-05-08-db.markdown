@@ -36,6 +36,12 @@ SET FOREIGN_KEY_CHECKS=0;
 SET FOREIGN_KEY_CHECKS=1;
 ```
 
+### 给表格添加字段
+
+```
+alter table table_name add column debug_pack_longest_cost varchar(255) after Android
+```
+
 ### 索引
 
 通常使用的是B树和B+树
