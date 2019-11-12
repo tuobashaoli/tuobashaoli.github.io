@@ -115,13 +115,6 @@ str.encode(encoding="utf-8",errors="strict")
 bytes(source,encoding,errors)
 ```
 
-
-### 列表推导
-
-```python
-[i for i in range(10) if i%2 == 0]
-```
-
 ### enumerate
 
 ```python
