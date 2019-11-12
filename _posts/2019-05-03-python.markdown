@@ -149,6 +149,14 @@ OrderedDict 字典子类，可以保留元素的添加顺序
 defaultdict 字典子类，可以调用用户自定义的工厂函数设置缺失值
 ```
 
+```
+from collections import namedtuple
+City = namedtuple('City','name country population coordinates') #创建了一个City类
+tokyo = City('Tokyo','JP','36',(35,139))
+print tokyo.population
+print tokyo.coordinates
+```
+
 ### 单例模式
 
 ##### 使用模块
@@ -571,3 +579,41 @@ class RevealingClass(metaclass=RevealingMeta):
 
 # 对应元类的初始化过程 __prepare__  --> __new__ --> __init__
 ```
+
+### 内置方法和实现的关系
+
+```
+abs    -->  __abs__
+bool   -->  __bool__
++      -->  __add__
++=     -->  __iadd__
+*      -->  __mul__
+-      -->  __sub__
+/      -->  __truediv__
+repr   -->  __repr__ #如果没有__str__，就会使用这个
+str    -->  __str__ #print的时候也会调用这个
+len    -->  __len__
+hash   -->  __hash__
+```
+
+### 列表推导
+
+在某些情况下可以替换filter、map
+
+```
+[ord(s) for s in "hello world"]
+map(lambda x:ord(x),"hello world")
+```
+
+### 生成器表达式
+
+和列表推导相比，不用一次性将所有元素生成，而是一个一个生成
+
+```
+(ord(s) for s in "hello world")
+```
+
+### 可变对象
+
+1. 在函数的参数设置默认值是可变对象，比如是列表，那么这个函数的所有调用都会使用这一个可变对象，而不是在每次调用的时候新建一个
+2. 在使用\*进行列表和元组生成的时候，当列表或者元组里面的元素是可变对象的时候，复制后的列表和元组里面是指向同一个对象的
