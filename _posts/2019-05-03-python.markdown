@@ -694,3 +694,82 @@ bytes.fromhex("31 21 0A")
 ### 处理文本文件
 
 在python3中，默认的open函数读取文件的时候自动做必要的解码，在写入文件的时候做必要的编码，python2需要使用io.open()
+
+### reduce
+
+在python3中，reduce被放到functools模块中，而内置的sum函数就可以取代reduce的求和功能
+
+### all和any
+
+```
+all([]) #
+all([1,2,0]) # 所有元素是真值，返回True
+any([1,2,0]) # 有元素是真值，返回True
+```
+
+### 仅限关键字参数
+
+在python3中，定义函数时若想指定仅限关键字参数，要把它们放到前面有\*的参数后面。如果不想支持数量不定的定位参数，但是想支持仅限关键字参数，在签名中放一个\*
+
+```python3
+def hello(a,*,b=1):
+    print(a)
+```
+
+`__defaults__` 定位参数的默认值
+
+`__kwdefaults__` 仅限关键字参数的默认值
+
+`__code__.co_varnames` 参数名称，不包括变长参数
+
+`__code__.co_argcount` 参数个数，不包括变长参数
+
+```python3
+from inspect import signature
+sig = signature(hello)
+print(str(sig)) #获取函数hello的参数部分完整的形式
+print(sig.parameters) #这是一个有序字典(OrderedDict)
+```
+
+### 函数注解
+
+```python3
+def hello(name:str,where:'int > 0' = 10)  -> str:
+    return "hello world"
+```
+
+注解只会存储在`__annotations__`中，解释器不会做任何其他事情
+
+### 函数式编程
+
+#### operator
+
+```python3
+#包括很多常用运算符的函数
+from operator import mul
+
+#itemgetter(1) 相当于 lambda x:x[1],本身就是可迭代对象中的一个元素,itemgetter(1,0)就相当于lambda x:(x[1],x[0])
+from operator import itemgetter
+
+for c in sorted(data,key=itemgetter(1)):
+   print(c)
+
+#attrgetter(name) 相当于 lambda x:getattr(x,name),attrgetter(name,age) 相当于 lambda x:(getattr(x,name),getattr(x,age))
+from operator import attrgetter
+
+info  = attrgetter('name','age')
+
+class Student(object):
+	name = "hehe"
+	age = 17
+
+stu = Student()
+
+print(info(stu))
+
+from operator import methodcaller
+
+myupper = methodcaller('upper')
+
+myupper("haha") # 相当于 "haha".upper()
+```
