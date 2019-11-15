@@ -793,3 +793,39 @@ def hello():
 函数访问在定义体之外定义的非全局变量
 
 ![avatar](/assets/images/closure.png)
+
+```python3
+avg = make_averager() #执行过后，make_averager的局部作用域已经消失，对averager的来说，自由变量series已经被绑定
+avg(10) # 10
+avg(11) # 10.5
+avg(12) # 11
+print(avg.__code__.co_freevars) # (series,) 
+print(avg.__closure__[0].cell_centents)
+```
+
+### nonlocal
+
+对于在闭包中给不可变对象赋值，会隐式地将自有变量更改为局部变量，从而导致异常
+
+```python3
+def hehe():
+    count = 0
+    total = 0
+    def average(new):
+        count += 1  # count是不可变对象，重新赋值相当于默认定义了这个变量，但是实际没有在average内部定义count，执行到这里就会报错
+	total += new
+	return total/count
+    return average
+```
+
+```python3
+def hehe():
+    count = 0
+    total = 0
+    def average(new):
+        nonlocal count,total  #把变量编程自有变量，每次有更新的时候就会更新绑定，python2没有这个关键字，只能通过转换成可变对象进行操作
+        count += 1
+        total += new
+        return total/count
+    return average
+```
