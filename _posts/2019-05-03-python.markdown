@@ -777,3 +777,19 @@ myupper = methodcaller('upper')
 
 myupper("haha") # 相当于 "haha".upper()
 ```
+
+### 变量作用域
+
+```python3
+b=3
+def hello():
+    print(b)
+    b = 1
+# 该函数执行时会报错，因为b在函数中定义，解释器就会把b视为局部变量，在打印b的时候就会去找局部变量b，而此时b还没有定义，所以报错
+```
+
+### 闭包
+
+函数访问在定义体之外定义的非全局变量
+
+![avatar](/assets/images/closure.png)
