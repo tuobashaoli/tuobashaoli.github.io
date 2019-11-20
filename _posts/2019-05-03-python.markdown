@@ -829,3 +829,30 @@ def hehe():
         return total/count
     return average
 ```
+
+### 弱引用
+
+#### del
+
+del不是删除对象，而是删除对象的引用
+
+#### weakref
+python控制台会有`_`绑定结果不为None的表达式的值
+
+```python3
+import weakref
+
+a = {1,2}
+b = weakref.ref(a)
+b()
+a = {3,4}
+b()
+b() is None # Flase
+b() is None # True
+```
+
+#### WeakValueDictionary
+
+是可变类型的映射，值是对象的弱引用，当被引用法人对象被删除后，对应的对象的键就会被删除
+
+list和dict不能作为弱引用的目标，但是它们的子类可以；int和tuple不能作为弱引用的目标，其子类也不可以
