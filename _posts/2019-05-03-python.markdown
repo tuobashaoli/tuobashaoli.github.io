@@ -81,26 +81,6 @@ False
 
 在连接列表中的字符串的时候，join会优先计算需要多大的内存，一次性申请，使用+就会一步一步申请，性能比前者差。
 
-### with语句和上下文管理器
-
-在执行with语句时，会调用对象的`__enter__`和`__exit__`方法，拥有这俩个方法的对象，就是上下文管理器
-
-```python
-class ContextManager(object):
-  def __enter__(self):
-    print "enter it"
-
-  def __exit__(self,exception_type,exception_value,traceback):
-    print "exit it"
-    if exception_type is None:
-      print "without exception"
-    else:
-      print "with exception %s"% exception_value
-      return False
-
-with ContextManager():
-  print "testing"
-```
 
 ### finally
 
@@ -879,3 +859,48 @@ print(format(42,"b")) #用二进制显示数字42
 实现`__len__`和`__getitem__`，从而支持索引、遍历、in操作
 
 实现了`__setitem__`机会将序列变成可变序列，从而实现一些就地操作，比如就地打乱
+
+### 内置类型子类
+
+内置类型的方法不会调用子类覆盖的方法
+
+![avatar](/assets/images/builtin.png)
+
+但是`__missing__`方法可以正常运行
+
+结论：**不要直接继承内置的类，如果有需要，继承collections中的UserDict、UserList、UserString**，内置类型dict，str，list都是使用C实现的
+
+### 上下文管理器和with
+
+上下文管理器包括`__enter__`和`__exit__`俩个方法，with语句开始运行时，会调用**上下文管理器对象**的`__enter__`方法，运行结束后，会调用`__exit__`方法
+
+```python3
+with open("text.txt") as fp: #执行with 后面的表达式得到的结果是上下文管理器对象，不过，把值绑定到目标变量上（as 子句）是在上下文管理器对象上调用 __enter__ 方法的结果
+    fp.read()
+```
+
+```python3
+class LookingClass:
+
+    def __enter__(self):
+        import sys
+	self.origin_write = sys.stdout.write
+	sys.stdout.write = self.reverse_write
+	return 'HEHE'
+
+    def reverse_write(self,text):
+        self.origin_write(text[::-1])
+
+    def __exit__(self,exc_type,exc_value,traceback):  #异常类，异常实例，traceback对象
+        import sys
+	sys.stdout.write = self.origin_write
+	if exc_type is ZeroDivisionError:
+	    print("No")
+	    return True
+```
+
+### contextlib
+
+#### @contextmanager
+
+
