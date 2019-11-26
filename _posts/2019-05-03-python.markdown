@@ -903,4 +903,26 @@ class LookingClass:
 
 #### @contextmanager
 
+通过编写一个类，并且实现`__enter__`和`__exit__`来编写上下文管理器相对比较麻烦，`@contextmanager`装饰器可以优化这个问题
+
+```python3
+import contextlib
+
+@contextlib.contextmanager
+def looking_glass():
+    import sys
+    origin_write = sys.stdout.write
+    
+    def reverse_write(text):
+        origin_write(text[::-1])
+
+    sys.stdout.write = reverse_write
+    yield "ASDFG" # with语句会在这里暂停
+    sys.stdout.write = origin_write # 出了with语句，就会执行这句话
+
+with looking_glass() as what:
+    print("HAHA")  # AHAH
+    print(what)    # GFDSA
+```
+
 
