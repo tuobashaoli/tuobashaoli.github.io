@@ -917,12 +917,30 @@ def looking_glass():
         origin_write(text[::-1])
 
     sys.stdout.write = reverse_write
-    yield "ASDFG" # with语句会在这里暂停
-    sys.stdout.write = origin_write # 出了with语句，就会执行这句话
+    try:
+        yield "ASDFG" # with语句会在这里暂停
+    except Exception:
+        pass
+    finally:
+        sys.stdout.write = origin_write # 出了with语句，就会执行这句话
 
 with looking_glass() as what:
     print("HAHA")  # AHAH
     print(what)    # GFDSA
 ```
 
+### 协程
 
+![avatar](/assets/images/xiecheng.png)
+
+```
+def averager():
+    total = 0
+    count = 0
+    average = None
+    while True:
+        term = yield average
+	total += term
+	count += 1
+	average = total/count
+```
