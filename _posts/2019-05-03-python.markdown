@@ -931,9 +931,11 @@ with looking_glass() as what:
 
 ### 协程
 
+#### yield
+
 ![avatar](/assets/images/xiecheng.png)
 
-```
+```python3
 def averager():
     total = 0
     count = 0
@@ -943,4 +945,76 @@ def averager():
 	total += term
 	count += 1
 	average = total/count
+
+v = averager()
+next(v) # 预激协程
+v.send(10) # 10
+v.send(12) # 11
+v.send(14) # 12
 ```
+
+当协程遇到异常会向上抛出，如果上层没有处理，那么就会导致协程退出
+
+可以在生成器调用throw和close方法停止协程
+
+```python3
+def handle():
+    while True:
+        try:
+	    x = yield
+	except ZeroDivisionError:
+	    print("okok")
+	else:
+	    print("x is ",x)
+
+h = handle()
+next(handle)
+handle.send(1)
+handle.throw(ZeroDivisionError) #通过调用throw，向协程抛出异常，由于协程有处理，所以可以继续运行
+handle.throw(Exception) # 协程终止
+```
+
+```python3
+from collections import namedtuple
+Result = namedtuple('Result', 'count average')
+
+def averager():
+    total = 0.0
+    count = 0
+    average = None
+    while True:
+        term = yield
+        if term is None:
+            break
+        total += term
+        count += 1
+        average = total/count
+
+    return Result(count, average)
+
+a = averager()
+next(a)
+a.send(10)
+a.send(20)
+try:
+    a.send(None)
+except StopIteration as exc:
+    result = exec.value
+```
+
+#### yield from
+
+```python3
+def chain(*iterable):
+    for it in iterable:
+        yield from it
+
+s = 'abc'
+t = tuple(range(3))
+print(list(chain(s,t))) # ['A', 'B', 'C', 0, 1, 2]
+```
+
+yield from x 会调用iter(x)
+
+> yield from 的主要功能是打开双向通道，把最外层的调用方与最内层的子生成器连接起来，这样二者可以直接发送和产出值，还可以直接传入异常，而不用在位于中间的协程中添加大量处理异常的样板代码。有了这个结构，协程可以通过以前不可能的方式委托职责。
+
