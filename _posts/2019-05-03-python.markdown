@@ -573,14 +573,6 @@ hash   -->  __hash__
 map(lambda x:ord(x),"hello world")
 ```
 
-### 生成器表达式
-
-和列表推导相比，不用一次性将所有元素生成，而是一个一个生成
-
-```
-(ord(s) for s in "hello world")
-```
-
 ### 可变对象
 
 1. 在函数的参数设置默认值是可变对象，比如是列表，那么这个函数的所有调用都会使用这一个可变对象，而不是在每次调用的时候新建一个
@@ -869,6 +861,60 @@ print(format(42,"b")) #用二进制显示数字42
 但是`__missing__`方法可以正常运行
 
 结论：**不要直接继承内置的类，如果有需要，继承collections中的UserDict、UserList、UserString**，内置类型dict，str，list都是使用C实现的
+
+### 可迭代
+
+iter(x)
+
+1. 如果对象实现了`__iter__`函数，那就调用它，获取一个迭代器
+
+2. 如果没有，但是实现了`__getitem__`方法，解释器会创建一个迭代器，利用这个方法将元素放进去
+
+3. 如果创建失败，那么抛出异常
+
+可迭代对象
+
+- 实现了`__iter__`
+
+- 实现了`__getitem__`
+
+Python从可迭代对象中获取迭代器。
+
+标准的迭代器接口有俩个方法：
+
+- `__next__`:返回迭代器下一个元素，如果没有，抛出StopIteration
+
+- `__iter__`:返回self
+
+可迭代对象不能拥有`__next__`方法，必须拥有`__iter__`方法；迭代器可以一直迭代，`__iter__`方法应该返回自身
+
+iter(func,tag) # 返回一个可调用的迭代器，在迭代的时候，会一直运行func，知道func的返回值是tag，并且不输出tag
+
+```
+with open("data.txt","r") as f:
+    for line in iter(f.readline,"\n"):
+        print(line)
+```
+
+### 生成器
+
+函数中使用yield，该函数就叫生成器函数，生成的对象就是生成器对象
+
+#### 生成器表达式
+
+列表推导式会一次性生成一个列表，生成器表达式
+
+```pythno3
+def gen():
+    print("1")
+    yield 'A'
+    print("2")
+    yield 'B'
+    print("3")
+
+listQ = [x for x in gen()] # 直接生成一个列表
+genQ = ( x for x in gen()) # 生成一个生成器，只在需要的时候运行生成器
+```
 
 ### 上下文管理器和with
 
