@@ -1018,3 +1018,23 @@ yield from x 会调用iter(x)
 
 > yield from 的主要功能是打开双向通道，把最外层的调用方与最内层的子生成器连接起来，这样二者可以直接发送和产出值，还可以直接传入异常，而不用在位于中间的协程中添加大量处理异常的样板代码。有了这个结构，协程可以通过以前不可能的方式委托职责。
 
+![avatar](/assets/images/yieldfrom.png)
+
+对于`RESULT = yield from EXPR`，可以简单理解成如下
+
+```
+_i = iter(EXPR)
+try:
+    _y = next(_i)
+except StopIteration as _e:
+    _r = _e.value
+else:
+    while 1:
+        _s = yield _y
+        try:
+            _y = _i.send(_s)
+        except StopIteration as _e:
+            _r = _e.value
+        break
+RESULT = _r
+```
