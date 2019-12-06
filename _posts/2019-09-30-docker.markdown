@@ -42,3 +42,29 @@ docker run -d --name nginx -v localvolume:/usr/share/nginx/html nginx
 ```
 docker volume prune -f
 ```
+
+##### 修改docker安装目录
+
+docker默认安装的目录是在/var/lib/docker目录下，如果需要修改到其他目录，可以做如下方法
+
+1. 将/var/lib/docker内容复制到其他目录，然后建个软连接
+2. 对于版本大于 v17.05.0，修改/etc/docker/daemon.json,加入"data-root": "/store/software/docker"
+
+然后重启docker服务
+
+##### 打包并导入镜像
+
+```
+docker save -o ubuntu.tar ubuntu:16.04
+docker load -i ubuntu.tar
+```
+
+##### Dockerfile
+
+```
+FROM ubuntu:16.04
+
+RUN mkdir -p /work/29418
+
+COPY code /work/29418
+```
