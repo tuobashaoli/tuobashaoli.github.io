@@ -69,6 +69,8 @@ RUN mkdir -p /work/29418
 COPY code /work/29418
 ```
 
+**在使用Dockerfile构建镜像的时候，默认会将当前目录中的所有内容复制到docker中的builder文件夹中，所以尽量在一个新目录中新建镜像**
+
 ##### 配置btrfs文件驱动
 
 1. 将docker的安装目录移动到btrfs问价系统上的目录上
@@ -103,3 +105,23 @@ btrfs subvolume snapshot subvolume1 subvolume1_snapshot  #会新建一个subvolu
 ```
 sudo docker commit -a "guishaoli@github.com" -m "with some software installed" 593d2327c2c8 ubuntu:custom
 ```
+
+##### 搭建内网harbor
+
+1. 安装docker-compose，harbor对docker-compose的版本都要求，尽量使用最新的吧，
+
+`curl -L https://github.com/docker/compose/releases/download/1.25.0/docker-compose-Linux-x86_64 -o /usr/local/bin/docker-compose`
+
+2. 按装pip
+
+`apt-get install python-pip`
+
+3. 下载Harbor包，版本可以换成新的，然后解压
+
+`https://storage.googleapis.com/harbor-releases/harbor-offline-installer-v1.6.1.tgz`
+
+4. 修改配置文件，可能叫harbor.yml,修改hostname为自己的ip，还是http的port，其他的配置可自行百度
+
+5. 执行`./install.sh`，没什么问题就可以看见在下载相关镜像并且使用docker-compose启动容器
+
+6. 在节点上 ，需要配置daemon.json中`"insecure-registries":["ip:port"]`
