@@ -68,3 +68,38 @@ RUN mkdir -p /work/29418
 
 COPY code /work/29418
 ```
+
+##### 配置btrfs文件驱动
+
+1. 将docker的安装目录移动到btrfs问价系统上的目录上
+
+2. 在/etc/docker/daemon.json文件中添加配置
+
+```
+"storage-driver":"btrfs"
+```
+
+重启docker服务，通过`docker info`查看Storage Driver的类型是btrfs
+
+
+在容器里面可以使用btrfs的子卷和快照功能，但是无法查看和删除子卷，但是在容器外面却可以
+
+
+在容器外面查看子卷的情况
+
+`btrfs subvolume list ./`
+
+![avatar](/assets/images/btrfs_subvolume.png)
+
+可以看到，如果配置了btrfs驱动，每次启动一个容器docker就会自动新建对应的subvolume，图中最后俩个subvolume是在容器内部新建的
+
+```
+btrfs subvolume create subvolume1
+btrfs subvolume snapshot subvolume1 subvolume1_snapshot  #会新建一个subvolume1_snapshot的目录，内容和subvolume1一样，但是却不会占用双倍的空间
+```
+
+##### 将正在运行的容器打包成镜像
+
+```
+sudo docker commit -a "guishaoli@github.com" -m "with some software installed" 593d2327c2c8 ubuntu:custom
+```
