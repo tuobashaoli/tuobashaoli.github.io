@@ -125,3 +125,35 @@ sudo docker commit -a "guishaoli@github.com" -m "with some software installed" 5
 5. 执行`./install.sh`，没什么问题就可以看见在下载相关镜像并且使用docker-compose启动容器
 
 6. 在节点上 ，需要配置daemon.json中`"insecure-registries":["ip:port"]`
+
+##### 限制资源
+
+
+--cpu 4 4个进程
+
+--cpus 1.5 1.5个cpu核数
+
+--cpuset-cpus=0,1 使用第0和第1个核
+
+-m 最小值是4m,
+
+--memory-swap  使用的swap大小，如果为-1，不限制swap大小，为0或者和-m相同，那么可以使用俩倍与-m大小的swap，如果比-m大，那么可以使用--memory-swap减去-m值的swap大小
+
+--memory-swappiness 主机包容器使用的匿名也swap出来，这个是个比例
+
+--memory-reservation 设置一个内存使用的soft limit，是OOM的阈值，必须小于-m的值
+
+--kernel-memory 内核内存的大小
+
+--oom-kill-disable 是否在OOM的时候杀死容器，只有设置了-m，这个才能设置为false
+
+--device-read-bps 磁盘的读速度
+
+--device-write-bps 磁盘的写速度
+
+--device-read-iops 磁盘每秒io读操作的上限
+
+--device-write-iops 磁盘每秒的IO写操作上限
+
+目前不支持限制单个容器的磁盘空间占用，但是可以使用lvm做逻辑分卷，挂载卷的方式限制挂载的空间的大小
+
