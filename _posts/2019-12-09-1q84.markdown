@@ -1,7 +1,7 @@
 ---
 title: "1q84"
 layout: post
-date: "2019-02-09 12:51:18"
+date: "2019-12-09 12:51:18"
 categories: blog
 published: True
 tags: "read"
