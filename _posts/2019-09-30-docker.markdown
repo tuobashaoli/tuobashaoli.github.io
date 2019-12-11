@@ -157,3 +157,29 @@ sudo docker commit -a "guishaoli@github.com" -m "with some software installed" 5
 
 目前不支持限制单个容器的磁盘空间占用，但是可以使用lvm做逻辑分卷，挂载卷的方式限制挂载的空间的大小
 
+##### 在docker里面运行docker
+
+启动容器时，加上参数`--privileged`，保证足够的权限
+
+在由于在容器里面运行容器时，其默认网段可能会与宿主容器冲突，需要修改宿主容器的容器网段配置
+
+```
+service docker stop
+
+ip link set dev docker0 down
+
+iptables -t nat -F POSTROUTING
+
+brctl addbr bridge0
+ip addr add 172.17.10.1/24 dev bridge0
+ip link set dev bridge0 up
+
+```
+
+修改daemon.json，添加如下行
+
+```
+"bridge":"bridge0"
+```
+
+重启docker服务
