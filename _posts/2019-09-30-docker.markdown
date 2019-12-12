@@ -183,3 +183,9 @@ ip link set dev bridge0 up
 ```
 
 重启docker服务
+
+##### 启动docker engine api
+
+通过`service docker status`找到docker的service文件，ubuntu中一般是在`/lib/systemd/system/docker.service`,修改这个文件，注释掉原来的ExecStart行，改成`ExecStart=/usr/bin/dockerd -H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375 --containerd=/run/containerd/containerd.sock`，然后`systemctl daemon-reload && service docker restart`，即可，访问主机的2375端口，就可以获取主机的docker相关信息
+
+官网上有对应的api使用方法介绍，比如1.39版本的api使用地址`https://docs.docker.com/engine/api/v1.39/`
