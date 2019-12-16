@@ -184,6 +184,26 @@ ip link set dev bridge0 up
 
 重启docker服务
 
+##### 修改容器网段
+
+上面的修改网段的方法需要重启服务，比较麻烦，但是如果容器已经在运行，并且不能重新用docker run启动一个容器，那么就不得不用上面的方法这么做了。
+
+但是如果在容器启动的时候就规划好网段，可以使用以下方法
+
+
+```
+docker network create -d brigde --subnet 172.18.10.0/16 mynet
+docker run --net-mynet --ip=172.18.10.119 -d --name=con ubuntu
+```
+
+这样就可以指定容器的ip了
+
+如果同一个宿主机的不同容器在不同的网段，即在启动容器的时候指定不同的bridge,那么需要如下的操作让这些容器联通
+
+```
+docker network connect mynet one-container #将容器one-container连接到网段mynet中，这样one-container就可以和mynet中的容器联通了
+```
+
 ##### 启动docker engine api
 
 通过`service docker status`找到docker的service文件，ubuntu中一般是在`/lib/systemd/system/docker.service`,修改这个文件，注释掉原来的ExecStart行，改成`ExecStart=/usr/bin/dockerd -H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375 --containerd=/run/containerd/containerd.sock`，然后`systemctl daemon-reload && service docker restart`，即可，访问主机的2375端口，就可以获取主机的docker相关信息
