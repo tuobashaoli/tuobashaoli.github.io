@@ -209,3 +209,40 @@ docker network connect mynet one-container #将容器one-container连接到网�
 通过`service docker status`找到docker的service文件，ubuntu中一般是在`/lib/systemd/system/docker.service`,修改这个文件，注释掉原来的ExecStart行，改成`ExecStart=/usr/bin/dockerd -H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375 --containerd=/run/containerd/containerd.sock`，然后`systemctl daemon-reload && service docker restart`，即可，访问主机的2375端口，就可以获取主机的docker相关信息
 
 官网上有对应的api使用方法介绍，比如1.39版本的api使用地址`https://docs.docker.com/engine/api/v1.39/`
+
+
+##### buildkit
+
+这个是docker官方推出的新的构建镜像工具，当前属于测试阶段，需要docker的版本大于18.09才可以使用。
+
+1. 需要`docker/dockerfile:experimental`镜像
+
+2. 需要`moby/buildkit`镜像
+
+3. 安装命令如下
+
+```
+docker run --name buildkit -d --privileged -p 1234:1234 moby/buildkit --addr tcp://0.0.0.0:1234
+export BUILDKIT_HOST=tcp://0.0.0.0:1234
+docker cp buildkit:/usr/bin/buildctl /usr/local/bin/
+```
+
+4. Dockerfile中的首行需要添加
+
+```
+# sytanx = docker/dockerfile:experimental
+```
+
+5. 环境变量中`export DOCKER_BUILDKIT=1`
+
+6. 在Dockerfile中
+
+```docker
+RUN --mount=type=bind,from=ubuntu:16.04,source=/etc,target=/myetc/ \
+    ls /myetc
+```
+
+表示将`ubnutu:16.04`中的镜像中的`/etc`目录挂载到本次构建镜像的`/myetc`目录中
+
+
+
