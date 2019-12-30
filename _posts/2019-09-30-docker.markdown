@@ -244,5 +244,11 @@ RUN --mount=type=bind,from=ubuntu:16.04,source=/etc,target=/myetc/ \
 
 表示将`ubnutu:16.04`中的镜像中的`/etc`目录挂载到本次构建镜像的`/myetc`目录中
 
+##### docker export import
 
+```
+docker export -o ubuntu.tar ubuntu  # ubuntu是一个容器
+
+docker import ubuntu.tar ubuntu:1209 # 将ubuntu.tar载入成新的镜像
+```
 
