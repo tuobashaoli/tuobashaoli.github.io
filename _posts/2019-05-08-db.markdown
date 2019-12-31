@@ -42,6 +42,28 @@ SET FOREIGN_KEY_CHECKS=1;
 alter table table_name add column debug_pack_longest_cost varchar(255) after Android
 ```
 
+### 外键约束
+#### 查看外键约束关系
+
+```
+#列出表test_a所有的外键关系，即其说明他表的那些字段是以test_a的字段为外键
+ select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE  where REFERENCED_TABLE_NAME='test_a';
+```
+
+#### 删除外键约束
+
+```
+# cons是外键约束名称
+alter table test_a drop foriegn key cons;
+```
+
+#### 添加外键约束
+
+```
+#cons是外键约束名称，fields1是test_a的字段，fields2是test_b的字段
+alter table test_a add constraint cons foreign key(fields1) references test_b(fields2);
+```
+
 ### 索引
 
 通常使用的是B树和B+树
