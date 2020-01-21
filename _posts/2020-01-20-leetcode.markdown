@@ -80,3 +80,24 @@ class Solution {
         return hehe;
     }
 ```
+
+### 盛水最多的容器
+
+双指针,设置头指针和为指针，关键思路是找到俩端哪个高度更低，那么就挪动那个端的值，更加有可能找到更大的面积，因为面积取决于低的高度和横坐标之间的长度的乘积。
+
+
+```java
+  public int maxArea(int[] height) {
+        int maxarea = 0,l=0,r=height.length-1;
+        while(l<r){
+            maxarea = Math.max(maxarea,Math.min(height[l],height[r])*(r-l));
+            if(height[l] < height[r]){
+                l++;
+            }else{
+                r--;
+            }
+        }
+        return maxarea;
+    }
+```
+
