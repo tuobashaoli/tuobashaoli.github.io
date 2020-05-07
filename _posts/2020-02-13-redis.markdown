@@ -1,0 +1,38 @@
+---
+title: "redis"
+layout: post
+date: "2020-02-13 09:58:18"
+categories: blog
+published: True
+tags: "code"
+---
+
+### redis.py
+
+StrictRedis实现了大部分的官方命令，Redis是StrictRedis的子类，用于向后兼容旧版本的redis.py
+
+```python
+import redis
+conn = redis.Redis(host='127.0.0.1', port=6379)
+# 可以使用url方式连接到数据库
+# conn = Redis.from_url('redis://@localhost:6379/1')
+conn.set('name', 'LinWOW')
+print(conn.get('name'))
+```
+
+### 部署方式
+
+使用容器部署
+
+```
+docker run --name some-redis -d redis:4.0 redis-server --appendonly yes
+```
+
+### 常用命令
+
+```
+config get requirepass #查询是否设置访问密码
+config set requirepass mypassword #设置访问密码
+auth mypassword #认证密码
+keys * #查询所有键值
+```
