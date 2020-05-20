@@ -153,6 +153,79 @@ colors.length = 2 // 不是只读的，可以修改的
 Array.isArray(value) //支持的浏览器怪多的
 
 colors2.toLocaleString() // 调用的是数组里面的每个元素的toLocaleString()方法获取返回值
+
+colors3.join("|") // red|blue|green
+
+colors3.push("black") //["red","blue","green","black"]
+
+colors3.pop()
+
+colors3.shift()
+
+colors3.unshift("grey")
+
+colors3.reverse();
+
+colors3.sort(compare);
+
+colors3.concat("yellow",["f","orange"]) // ["red","blue","green","black","yellow","f","orange"]
+
+colors3.slice(1,3) //返回第1、2、3个元素
+
+colors3.splice(1,2,"brown") // 从位置1开始删除2个元素，然后加入一个"brown"
+
+colors3.indexof("yellow")
+
+colors3.lastindexof("red")
 ```
+
+##### Date
+
+```javascript
+var now = new Date();
+```
+
+##### RegExp
+
+```javascript
+var expression = /pattern/flag ;
+
+/*
+* flag:
+*    g 全局匹配
+*    i 不区分大小写
+*    m 多行模式
+*/
+
+var pattern  = /[bc]at/i;
+
+var pattern2 = new RegExp("[bc]at","i");
+
+var matches = pattern2.exec("cat bat a cat");
+
+pattern.test("cat") //返回true或者false
+```
+
+##### Function
+
+###### 内部属性
+
+####### arguments
+
+arguments.callee,指向拥有这个arguments对象的函数
+
+####### this
+
+在全局环境中调用函数时，函数中的this就是window
+
+####### caller属性
+
+显示函数的调用者，严格模式下不能使用
+
+####### length属性
+
+函数期望接收的参数的个数
+
+####### prototype属性
 
 
