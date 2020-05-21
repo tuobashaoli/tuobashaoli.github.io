@@ -333,6 +333,8 @@ window.innerWidth //1920
 
 #### 原型
 
+创建了一个新函数，就会根据一组特定的规则为该函数创建一个prototype属性，并指向原型对象，原型对象中的constructor属性指向该函数。
+
 ```javascript
 function Person(){
 }
@@ -344,4 +346,22 @@ Person.prototype.sayName = function(){
 
 var person1 = new Person();
 person1.sayName();
+
+//比较简略的写法，但是会导致原型对象中的constructor属性不指向Person，可以手动加上，但是这样constructor属性就是可枚举的
+function Person(){}
+
+Person.prototype = {
+    name:"Monkey",
+    age:29,
+    say:function(){
+        alert(this.name)
+    }
+}
+
+//重设构造函数即可解决以上问题
+Object.defineProperty(Person.prototype,"constructor",{
+    enumerable: false,
+    value: Person
+});
+
 ```
