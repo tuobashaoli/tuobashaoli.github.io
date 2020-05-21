@@ -76,15 +76,15 @@ o.toLocaleString();
 o.valueOf();
 ```
 
-##### 操作符
+#### 操作符
 
-###### 位操作符
+##### 位操作符
 
 ```javascript
 ~、&、|、^、有符号右移>>、无符号右移>>>
 ```
 
-###### 相等操作符
+##### 相等操作符
 
 ```javascript
 "5" == 5 // true
@@ -97,7 +97,7 @@ null == 0 //false
 "55" !== 55 //true 因为不转换就不相同了，实际是因为类型不同，也就是类型和数值都要一样
 ```
 
-##### with
+#### with
 
 ```
 with(location) {
@@ -105,17 +105,17 @@ with(location) {
 }
 ```
 
-##### switch
+#### switch
 
 比较的时候使用的是全等操作符
 
-##### 函数
+#### 函数
 
-###### 参数
+##### 参数
 
 很松散，定义的参数不一定在调用时传参，也可以在函数内使用argument(这个类似数组)访问传入的参数，
 
-##### 作用域
+#### 作用域
 
 没有块级作用域
 
@@ -128,7 +128,7 @@ alert(color) //"blue"
 
 var定义的变量会绑定到当前的环境，如果没有用var定义，则会将变量变成全局变量
 
-##### object类型
+#### object类型
 
 ```javascript
 var obj = new object();
@@ -140,7 +140,7 @@ var person = {
 person["name"] //gsl
 person.name //gsl
 ```
-##### Array
+#### Array
 
 ```javascript
 var colors = new Array();
@@ -179,13 +179,13 @@ colors3.indexof("yellow")
 colors3.lastindexof("red")
 ```
 
-##### Date
+#### Date
 
 ```javascript
 var now = new Date();
 ```
 
-##### RegExp
+#### RegExp
 
 ```javascript
 var expression = /pattern/flag ;
@@ -206,29 +206,28 @@ var matches = pattern2.exec("cat bat a cat");
 pattern.test("cat") //返回true或者false
 ```
 
-##### Function
+#### Function
 
-###### 内部属性
+##### 内部属性
 
-####### arguments
+###### arguments
 
 arguments.callee,指向拥有这个arguments对象的函数
 
-####### this
+###### this
 
 在全局环境中调用函数时，函数中的this就是window
 
-####### caller属性
+###### caller属性
 
 显示函数的调用者，严格模式下不能使用
-
-####### length属性
+###### length属性
 
 函数期望接收的参数的个数
 
-####### prototype属性
+###### prototype属性
 
-###### 基本包装类型
+##### 基本包装类型
 
 对基本类型的包装，自动创建的基本包装类型的对象，只存在于一行代码执行瞬间。
 
@@ -243,11 +242,11 @@ var num = new Number(2);
 alert(typeof num);// object
 ```
 
-####### Boolean
+###### Boolean
 
 建议不要用，因为基本包装类型在需要真值时都会被转成true
 
-####### Number
+###### Number
 
 ```javascript
 var num = 10;
@@ -262,7 +261,7 @@ var num = 99;
 alert(num.toPercision(1)); //
 ```
 
-####### String
+###### String
 
 ```javascript
 var ss = "string code";
@@ -302,7 +301,7 @@ var result = text.split(",",1);// ["cat"]
 var result = text.localeCompare("hehe");//1,大多数是这样的
 ```
 
-###### Global对象
+##### Global对象
 
 ```javascript
 var uri = "http://www.baidu.com/hello world";
@@ -314,5 +313,5 @@ eval("alert('hi')");//看起来像是创造了一个子进程，在子进程里�
 
 window.innerWidth //1920
 ```
-###### Math对象
+##### Math对象
 
