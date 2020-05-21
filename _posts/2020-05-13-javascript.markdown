@@ -365,3 +365,5 @@ Object.defineProperty(Person.prototype,"constructor",{
 });
 
 ```
+
+当原型对象包含引用类型的时候，修改对象中的该属性，会影响其他对象的对应的属性值。
