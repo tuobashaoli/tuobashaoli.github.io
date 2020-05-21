@@ -315,3 +315,33 @@ window.innerWidth //1920
 ```
 ##### Math对象
 
+## 面向对象
+
+### 创建对象
+
+#### 工厂模式
+
+```javascript
+
+```
+
+#### 构造函数模式
+
+```javascript
+
+```
+
+#### 原型
+
+```javascript
+function Person(){
+}
+
+Person.prototype.name = "Tony";
+Person.prototype.sayName = function(){
+    alert(this.name);
+};
+
+var person1 = new Person();
+person1.sayName();
+```
