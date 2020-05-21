@@ -228,4 +228,91 @@ arguments.callee,指向拥有这个arguments对象的函数
 
 ####### prototype属性
 
+###### 基本包装类型
+
+对基本类型的包装，自动创建的基本包装类型的对象，只存在于一行代码执行瞬间。
+
+```javascript
+var s1 = "some";
+s1.jkl = "rookie";
+alert(s1.jkl) // undefined
+
+var num = Number(1);
+alert(typeof num); // number
+var num = new Number(2);
+alert(typeof num);// object
+```
+
+####### Boolean
+
+建议不要用，因为基本包装类型在需要真值时都会被转成true
+
+####### Number
+
+```javascript
+var num = 10;
+alert(num.toString(8)); // "12"
+
+alert(num.toFixed(2)); // "10.00"
+
+alert(num.toExponential(1)) //"1.0e+1" 科学计数法
+
+var num = 99;
+
+alert(num.toPercision(1)); //
+```
+
+####### String
+
+```javascript
+var ss = "string code";
+ss.charAt(1);
+ss.charCodeAt(1);//116
+ss[2];
+ss.concat(" hello");//返回"string code hello"，不改变ss
+ss.slice(3,7); //"ing "
+ss.substr(3,3); //"ing"
+ss.substring(3,7); //"ing "
+
+var bb = "hello world";
+bb.indexof("o");//4
+bb.lastIndexOf("o");//7
+bb.indexof("o",6);//7,从位置6开始向后搜索
+bb.lastIndexOf("o",4);//4，从位置4向前搜索
+
+var uu = " hello ";
+var uc = uu.trim();
+
+var yy = "jkl";
+var rookie = yy.toLocaleUpperCase();
+var shy = yy.toUpperCase();
+var ning = yy.toLocaleLowerCase();
+var baolan = yy.toLowerCase();
+
+var pattern = /.at/;
+var text = "cat,bat,";
+var matches = text.match(pattern);
+var pos = text.search(/at/);
+
+var result = text.replace("at","cond"); // "cond,bat,"
+var result = text.replace(/at/g,"cond"); // "cond,bond," 
+
+var result = text.split(",",1);// ["cat"]
+
+var result = text.localeCompare("hehe");//1,大多数是这样的
+```
+
+###### Global对象
+
+```javascript
+var uri = "http://www.baidu.com/hello world";
+
+encodeURI(uri); //"http://www.baidu.com/hello%20world"
+encodeURIComponent(uri);//"http%3A%2F%2Fwww.badu.com%2Fhello%20world"
+
+eval("alert('hi')");//看起来像是创造了一个子进程，在子进程里面执行javascript语句，严格模式下主进程无法获取eval中定义的对象，当然只是这么理解。
+
+window.innerWidth //1920
+```
+###### Math对象
 
