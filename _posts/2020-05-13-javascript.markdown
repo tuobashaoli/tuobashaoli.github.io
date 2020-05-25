@@ -367,3 +367,123 @@ Object.defineProperty(Person.prototype,"constructor",{
 ```
 
 当原型对象包含引用类型的时候，修改对象中的该属性，会影响其他对象的对应的属性值。
+
+#### 继承
+
+##### 原型链
+
+当一个类型的原型对象指向另一个类型的实例，此时原型对象将包含指向另一个原型的指针
+
+```javasvript
+function Father(){
+    this.property = true;
+}
+
+Father.prototype.getFatherValue = function (){
+    return this.protoperty;
+}
+
+function Son(){
+    this.sonproperty =false;
+}
+
+Son.prototype = new Father();
+
+Son.prtotype.getSonValue = function(){
+    return this.sonproperty;
+}
+
+var instance = new Son();
+alert(instance.getFatherValue());
+```
+
+问题
+
+1. 包含引用类型的原型属性会被所有实例共享
+2. 创建子类型实例的时候，不能向超类型的构造函数中传递参数，如果在子类定义时就将属性赋了值，对象实例问就不能再更改自己的属性了。这样就变成了类拥有属性，而不是对象拥有属性了，所以原型链并不实用。
+
+##### 借用构造函数
+
+```javascript
+function Father(){
+    this.colors = ["red","blue","green"]
+}
+
+function Son(){
+    Father.call(this); // 实际执行的时候才会执行Father函数，对于Son类型来说，现在是什么都没有的
+}
+
+var instance1 = new Son();
+instance1.colors.push("grey");
+alert(instance.colors); //red,blue,green,grey
+
+var instance2 = new Son();
+alert(instance2.colors); //red,blue,green
+```
+
+问题
+
+1. 方法都在构造函数中定义，函数无法复用，
+2. 在超类的原型中定义的方法，对子类型是不可见的
+
+很少单独使用借用构造函数
+
+##### 组合继承
+
+```javascript
+function Father(name){
+    this.name = name;
+    this.colors = ["red","blue","green"];
+}
+
+Father.prototype.sayName = function(){
+    alert(this.name);
+}
+
+function Son(name,age){
+    Son.call(this,name);
+    this.age = age;
+}
+
+Son.prototype = new Father();
+Son.prototype.constructor = Son;
+Son.prototype.sayAge = function(){
+    alert(this.age);
+};
+```
+
+这是javascript中常用的继承模式
+
+##### 寄生组合继承
+
+组合继承会调用俩次超类型的构造函数。
+
+```javascript
+function inheritPrototype(son,father){
+    var prototype = object(father.prototype);
+    prototype.constructor = son;
+    son.prototype = prototype;
+}
+
+function Father(name){
+    this.name = name;
+    this.colors = ["red","blue","green"];
+}
+
+Father.prototype.sayName = function(){
+    alert(this.name);
+}
+
+function Son(name,age){
+    Son.call(this,name);
+    this.age = age;
+}
+
+inheritPrototype(Son,Father);
+
+Son.prototype.sayAge = function(){
+    alert(this.age);
+};
+```
+
+普遍认为最理想的继承范式
