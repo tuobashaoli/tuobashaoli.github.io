@@ -487,3 +487,18 @@ Son.prototype.sayAge = function(){
 ```
 
 普遍认为最理想的继承范式
+
+
+#### 函数表达式
+
+```javascript
+//函数声明，会有函数声明提升
+function say(){
+    alert("hello");
+}
+
+//匿名函数，不会有函数声明提升
+var say = function (){
+    alert("world");
+}
+```
