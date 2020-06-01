@@ -67,3 +67,184 @@ alter table test_a add constraint cons foreign key(fields1) references test_b(fi
 ### 索引
 
 通常使用的是B树和B+树
+
+### mysql主从
+
+优点：1.热备份  2，读写分离
+
+#### 原理
+
+1. 将master改变记录到二进制日志
+2. slave将master的二进制日志拷贝到中继日志(relay log)
+3. slave重做中继日志的事件，改变自己的数据
+
+#### 配置
+
+1. 打开binary log并设置id
+
+修改配置文件,并重启服务
+
+```conf
+[mysqld]
+log-bin=mysql-bin
+server-id=1
+```
+
+2. 创建一个同步用户
+
+```mysql
+create user 'rep1'@'slave address' indetified by 'password';
+grant replication slave on *.* to 'rep1'@'slave address';
+```
+
+3. 获取master的二进制日志和数据库备份
+
+将数据库全局读锁定
+
+```mysql
+flush tables with read lock;
+```
+
+**退出当前连接会自动解锁**
+
+查看二进制日志和当前坐标
+
+```mysql
+show master status;
+```
+
+**记住File和Position**
+
+备份数据库
+
+在`read lock`的状态下，使用`mysqldump`将主数据库中的数据备份
+
+```sh
+mysqldump --all-databases --master-data > dbdump.db
+```
+
+释放`read lock`
+
+```mysql
+unlock tables;
+```
+
+slave节点的配置
+
+修改配置文件，增加server-id，不能和master的一样
+
+```conf
+[mysqld]
+server-id=2
+```
+
+将master上的备份的数据恢复到slave节点
+
+```sh
+mysql -uroot -p < dbdump.sql
+```
+
+设置slave和master的通信
+
+```mysql
+change master to
+MASTER_HOST='master_host_name',
+MASTER_USER='replication_user_name',
+MASTER_PASSWORD='replocation_password',
+MASTER_LOG_FILE='recorded_log_file_name',
+MASTER_LOG_POS='recorded_log_position';
+```
+
+启动slave
+
+```mysql
+START SLAVE;
+```
+
+查看同步状态
+
+```mysql
+show slave status;
+```
+
+#### 读写分离
+
+写位于master，读位于slave，用一个代理去判断是读还是写
+
+1. MySQL\_Proxy
+2. MaxScale 推荐
+3. Atlas
+4. MyCat
+
+安装好MaxScale之后，进行如下配置
+
+```
+create user 'username'@'maxscalehost' indentified by 'password';
+grant select on mysql.user to 'username'@'maxscalehost';
+grant select on mysql.db to 'username'@'maxscalehost';
+grant select on mysql.tables_priv to 'username'@'maxscalehost';
+grant show databases on *.* to 'username'@'maxscalehost';
+grant replication client on *.* to 'username'@'maxscalehost';
+```
+
+修改MaxScale中的配置文件
+
+/etc/maxscale.cnf
+
+```conf
+[maxscale]
+threads=auto
+log_info=1
+
+[master]
+type=server
+address=192.168.10.2
+port=3306
+protocol=MariaDBBackend
+
+[slave1]
+type=server
+address=192.168.10.3
+port=3306
+protocol=MariaDBBackend
+
+[MariaDB-Monitor]
+type=monitor
+module=mariadbmon
+servers=master,slave1
+user=maxscale
+password=password
+monitor_interval=2000
+
+[Read-Write-service]
+type=service
+router=readwritesplit
+servers=master,slave1
+user=maxscale
+password=password
+max_slave_connections=100%
+max_slave_replication_lag=30
+
+[Read-Write-Listener]
+type=listener
+service=Read-Write-Service
+protocol=MariaDBClient
+port=4006
+
+[CLI]
+type=service
+router=cli
+
+[CLI-Listener]
+type=listener
+service=CLI
+protocal=maxscaled
+socket=default
+```
+
+启动
+
+```
+sudo systemctl start maxscale
+sudo systemctl enable maxscale
+```
