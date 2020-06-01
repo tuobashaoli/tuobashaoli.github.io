@@ -502,3 +502,111 @@ var say = function (){
     alert("world");
 }
 ```
+
+#### 匿名函数
+
+```javascript
+var factotial = (function f(num){
+    if (num <= 1){
+        return 1;
+    }else{
+        return num*f(num-1);
+    }
+});
+```
+
+#### 闭包
+
+常用的场景是在函数里面定义函数，内部函数的作用域包含外部函数的作用域。
+
+```javascript
+
+var compareNames = createComparisonFunction("name");//执行完成之后，函数的活动对象不会被销毁，其执行环境的作用域会被销毁
+
+var result = compareNames({name:"Nicholas"},{name:"Greg"});
+
+compareNames = null;//匿名函数被销毁了，原函数的活动对象才会被销毁
+
+function createFunc(){
+    var result = new Array();
+
+    for(var i=0;i<10;i++){
+        result[i] = function(){//返回的都是10，因为闭包会引用的i就是最后一个i的值
+	    return i;
+	};
+    }
+    return result;
+}
+
+function createFunc(){
+    var result = new Array();
+
+    for(var i=0;i<10;i++){
+        result[i] = function(num){
+            return function(){
+                return num;
+	    };
+        };
+    }
+    return result;
+}
+```
+
+#### 模仿块级作用域
+
+```javascript
+//定义这个函数并且立即执行
+(function(){
+    //这里是块级作用域
+})();
+```
+
+#### 私有变量
+
+```javascript
+对象的属性都是公有的，但是函数的参数、局部变量、和在函数内部定义的其他函数，可以认为是私有变量。
+```
+
+##### 静态私有变量
+
+```javascript
+(function(){
+    var name = "";
+    Person = function(value){
+        name = value;
+    };
+
+    Person.prototype.getName = function(){
+        return name;
+    };
+
+    Person.prototype.setName = function (value){
+        name = value;
+    };
+})();
+
+var p1 = new Person("Nicle");
+p1.setName("Gary");
+
+var p2 = new Person("Pony");
+p2.getName();
+```
+
+##### 模块模式
+
+```javascript
+var singleton = function(){
+    var privateVariable = 10;
+    function privateFunction(){
+        return false;
+    }
+
+    return {
+        publicProperty: true,
+	publicMethod:function(){
+            privateVariable++;
+	    return privateFunction();
+	}
+    };
+}
+```
