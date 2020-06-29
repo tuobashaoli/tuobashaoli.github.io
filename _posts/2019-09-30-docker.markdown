@@ -252,3 +252,12 @@ docker export -o ubuntu.tar ubuntu  # ubuntu是一个容器
 docker import ubuntu.tar ubuntu:1209 # 将ubuntu.tar载入成新的镜像
 ```
 
+### 网络模式
+
+1. host模式，主机模式
+
+2. container模式，容器模式
+
+3. bridge模式，网桥模式
+
+3. none，无网络
