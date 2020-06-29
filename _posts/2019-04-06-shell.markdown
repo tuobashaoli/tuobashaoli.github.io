@@ -94,6 +94,11 @@ sed -i "s/hello/world/g" file
 
 `sed -i '/<manifest>/a <remote="gerrit.com">' xml` 在某一行下面添加一行
 
+```
+sed -e '2i\asd' a.txt #在第二行前面一行添加asd
+sed -e '3a\qwe' a.txt #在第三行后面一行添加qwe
+```
+
 tr -d ':' \#删除冒号
 
 col -x \#将tab装换成space
@@ -178,6 +183,25 @@ do
     file=`eval echo '$'File$i`
     echo $file
 done
+```
+
+##### grep命令取出两个文件中不同的行
+
+```
+#取出相同的行
+grep -wf f1.txt f2.txt
+
+#取出不同的行
+grep -wvf f1.txt f2.txt #找出只有f2.txt中存在的行
+```
+
+##### grep
+
+```
+grep -x hello a.txt #找出a.txt中包含且只包含hello的行
+grep -c hello a.txt #找出a.txt中包含hello的行数
+grep -n hello a.txt #找出a.txt中包含hello的行，并且打印行号
+grep -w *hello a.txt #精确搜索a.txt中的包含*hello的行。*不会被认为是任意字符
 ```
 
 shell脚本
