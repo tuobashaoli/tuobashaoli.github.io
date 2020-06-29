@@ -66,7 +66,21 @@ alter table test_a add constraint cons foreign key(fields1) references test_b(fi
 
 ### 索引
 
-通常使用的是B树和B+树
+#### 创建索引
+
+```
+create index indexName on mytable(username(length)); #如果是CHAR，VARCHAR类型，length可以小于字段实际长度；如果是BLOB和TEXT类型，必须指定 length
+alter table mytable add index indexName on username(length);
+drop index indexName on mytable;
+
+#唯一索引
+create unique index indexName on mytable(username(length));
+
+#组合索引
+alter table mytable add index name_city_age(name(10),city,age);
+```
+
+
 
 ### mysql主从
 
