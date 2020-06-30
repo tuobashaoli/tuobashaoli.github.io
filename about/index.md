@@ -9,7 +9,7 @@ type: about
 
 ##### 中国科学技术大学，信息安全，本科
 
-### 个人技术栈
+### 技术栈
 
 ##### 熟悉ruby编程
 ##### 熟悉linux shell命令
@@ -28,3 +28,7 @@ type: about
 ##### 2018年7月到现在，负责运维工作，主要工作是构建jenkins编译环境，编写构建pipline模式的脚本编译job，维护项目管理系统redmine，开发redmine插件，维护内部和安卓构建相关服务，搭建jenkins、xref、gerrit、maven、sonarqube、bugzilla、svn等系统，并使用docker部署服务
 
 #### 2019年6月至今，OPPO
+
+### 职业愿景
+
+### 评价
