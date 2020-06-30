@@ -1,0 +1,53 @@
+---
+categories: blog
+date: '2019-06-30 10:32:18'
+description: do you know flask
+layout: post
+published: True
+title: "put it in flask"
+---
+
+## AppContext/RequestContext
+
+接收请求 -> 创建请求上下文 -> 请求上下文入栈 -> 创建该请求的应用上下文 -> 入栈 -> 处理逻辑 -> 请求上下文出栈 -> 应用上下文出栈
+
+请求上下文中比较重要对象是request和session
+
+```python
+request.max_content_length # 获取该请求允许的数据包最大字节数
+```
+
+应用上下文对象AppContext会在必要时被创建和销毁，它不会在线程间移动，并且也不会在不同的请求之间共享；因此它可以作为在一次请求中临时存放数据的地方，其主要管理本次请求的当前应用app对象和临时全局g对象
+
+应用上下文可以主动创建
+
+```python
+#
+app_context = app.app_context()
+app_context.push()
+print(current_app)
+app_context.pop()
+
+#
+with app.app_context():
+    print(current_app)
+```
+
+可以用来做数据库的上下文
+
+```python3
+class DBAtomic(ContextDecorator):
+    def __init__(self,db):
+        self.db = db
+
+    def __enter__(self):
+        self.app_context = app.app_context()
+	self.app_context.push()
+
+    def __exit__(self,exc_type,exc_val,exc_tb):
+        if exc_type:
+	    self.db.session.rollback()
+	else:
+	    self.db.session.commit()
+	self.app_context.pop()
+```
