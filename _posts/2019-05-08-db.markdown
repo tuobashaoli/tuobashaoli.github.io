@@ -162,7 +162,8 @@ mysql -uroot -p < dbdump.sql
 
 ```mysql
 change master to
-MASTER_HOST='master_host_name',
+MASTER_HOST='master_host_ip',
+MASTER_PORT='master_port',
 MASTER_USER='replication_user_name',
 MASTER_PASSWORD='replocation_password',
 MASTER_LOG_FILE='recorded_log_file_name',
@@ -175,7 +176,7 @@ MASTER_LOG_POS='recorded_log_position';
 START SLAVE;
 ```
 
-查看同步状态
+查看同步状态,确认Slave\_IO\_Running和Slave\_SQL\_Running都是Yes即可
 
 ```mysql
 show slave status;
@@ -190,13 +191,15 @@ show slave status;
 3. Atlas
 4. MyCat
 
-安装好MaxScale之后，进行如下配置
+安装好MaxScale之后，在master数据库中进行如下配置
 
 ```
 create user 'username'@'maxscalehost' indentified by 'password';
 grant select on mysql.user to 'username'@'maxscalehost';
 grant select on mysql.db to 'username'@'maxscalehost';
 grant select on mysql.tables_priv to 'username'@'maxscalehost';
+grant select on mysql.colums_priv to  'username'@'maxscalehost';
+grant select om mysql.proxies_priv to  'username'@'maxscalehost';
 grant show databases on *.* to 'username'@'maxscalehost';
 grant replication client on *.* to 'username'@'maxscalehost';
 ```
@@ -214,17 +217,17 @@ log_info=1
 type=server
 address=192.168.10.2
 port=3306
-protocol=MariaDBBackend
+protocol=MySQLBackend
 
 [slave1]
 type=server
 address=192.168.10.3
 port=3306
-protocol=MariaDBBackend
+protocol=MySQLBackend
 
-[MariaDB-Monitor]
+[MySQL-Monitor]
 type=monitor
-module=mariadbmon
+module=mysqlmon
 servers=master,slave1
 user=maxscale
 password=password
@@ -242,7 +245,7 @@ max_slave_replication_lag=30
 [Read-Write-Listener]
 type=listener
 service=Read-Write-Service
-protocol=MariaDBClient
+protocol=MySQLClient
 port=4006
 
 [CLI]
