@@ -1,0 +1,56 @@
+---
+categories: blog
+date: '2020-07-22 15:52:18'
+description: zabbix
+layout: post
+published: True
+title: "zabbix"
+---
+
+
+## 安装指南
+
+建议使用docker安装，官方给了镜像
+
+```
+docker pull zabbix/zabbix-server-mysql
+docker pull zabbix/zabbix-web-nginx-mysql
+docker pull zabbix/zabbix-java-gateway
+```
+
+当然，数据库也可以使用docker安装
+
+```
+docker run -d -p 3307:3306 --name zabbix-mysql -e MYSQL_DATABASE=zabbix -e MYSQL_USER=zabbix -e MYSQL_PASSWORD=zabbix -e MYSQL_ROOT_PASSWORD=passwd mysql:5.7  --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+```
+
+启动数据库后，查找官方的数据库导入初始化数据，不过。不确定不导入数据，不确定zabbix服务会不会自己初始化数据
+
+启动网关
+
+```
+docker run -d --name zabbix-java-gateway -p 10052:10052 zabbix/zabbix-java-gateway
+```
+
+启动zabbix服务
+
+```
+docker run -d --name zabbix-server-mysql -e DB_SERVER_HOST="zabbix-mysql" -e MYSQL_DATABASE="zabbix" -e MYSQL_USER="zabbix" -e MYSQL_PASSWORD="zabbix" -e MYSQL_ROOT_PASSWORD="passwd" -e ZBX_JAVAGATEWAY="zabbix-java-gateway" --link zabbix-mysql:mysql --link zabbix-java-gateway:zabbix-java-gateway -p 10051:10051  zabbix/zabbix-server-mysql
+```
+
+启动nginx
+
+```
+docker run -d --name zabbix-web-nginx-mysql  -e DB_SERVER_HOST="mysql-server" -e MYSQL_DATABASE="zabbix" -e MYSQL_USER="zabbix" -e MYSQL_PASSWORD="zabbix" -e MYSQL_ROOT_PASSWORD="passwd" --link zabbix-mysql:mysql --link zabbix-server-mysql:zabbix-server -p 8086:8080  zabbix/zabbix-web-nginx-mysql
+```
+
+启动客户端
+
+```
+docker run -d --name zabbix-agent -e ZBX_HOSTNAME="zabbix_agent_host_ip" -e ZBX_SERVER_HOST="zabbix_server_ip" -p 10050:10050 -d zabbix/zabbix-agent
+```
+
+
+## 使用指南
+
+agent的配置，修改默认的配置文件`/etc/zabbix/zabbix_agentd.conf`
