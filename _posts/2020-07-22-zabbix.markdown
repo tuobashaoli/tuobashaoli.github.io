@@ -13,9 +13,9 @@ title: "zabbix"
 建议使用docker安装，官方给了镜像
 
 ```
-docker pull zabbix/zabbix-server-mysql
-docker pull zabbix/zabbix-web-nginx-mysql
-docker pull zabbix/zabbix-java-gateway
+docker pull zabbix/zabbix-server-mysql:ubuntu-5.0.2
+docker pull zabbix/zabbix-web-nginx-mysql:ubuntu-5.0.2
+docker pull zabbix/zabbix-java-gateway:ubuntu-5.0.2
 ```
 
 当然，数据库也可以使用docker安装
@@ -44,7 +44,7 @@ docker run -d --name zabbix-server-mysql -e DB_SERVER_HOST="zabbix-mysql" -e MYS
 docker run -d --name zabbix-web-nginx-mysql  -e DB_SERVER_HOST="mysql-server" -e MYSQL_DATABASE="zabbix" -e MYSQL_USER="zabbix" -e MYSQL_PASSWORD="zabbix" -e MYSQL_ROOT_PASSWORD="passwd" --link zabbix-mysql:mysql --link zabbix-server-mysql:zabbix-server -p 8086:8080  zabbix/zabbix-web-nginx-mysql
 ```
 
-启动客户端
+启动客户端,对于服务的监控，可以使用直接安装zabbix-agent，不论是容器还是物理机，都可以直接监控服务
 
 ```
 docker run -d --name zabbix-agent -e ZBX_HOSTNAME="zabbix_agent_host_ip" -e ZBX_SERVER_HOST="zabbix_server_ip" -p 10050:10050 -d zabbix/zabbix-agent
