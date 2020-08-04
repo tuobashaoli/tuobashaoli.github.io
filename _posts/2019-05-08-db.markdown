@@ -14,6 +14,53 @@ categories: blog
 
 原子性、一致性、隔离性、持久性
 
+MySQL中，事务是在引擎层实现的，MyISAM不支持事务，InnoDB支持
+
+#### 隔离级别
+
+隔离级别不同，可能会出现脏读、幻度和不可重复读，标准的隔离级别包括读未提交、读提交、可重复读和串行化
+
+##### 读未提交
+
+事务执行的时候，会读到其他未提交的事务的数据，称之为脏读
+
+##### 读提交
+
+事务执行的时候，会读到其他已提交的事务的数据，称之为不可重复读
+
+##### 可重复读
+
+同一个事务里,select语句的结果是基于事务开始的时间点的状态，但是其他操作可能会出现和select结果不一致的情况，称之为幻读。
+
+mysql默认的事务隔离级别就是这个，原因是5.0以前的mysql在主从复制的时候，如果使用读提交的隔离级别，会导致在从数据库使用binlog同步数据的时候不一致的问题
+
+##### 串行化
+
+事务全部串行化，会阻塞，但是避免了以上的问题
+
+#### 设置隔离级别
+
+在配置文件中设置
+
+```
+[mysqld]
+transaction-isolation = READ-COMMITTED #可选值是READ-UNCOMMITTED，READ-COMMITTED，REPEATABLE-READ，SERIALIZABLE
+```
+
+或者通过命令设置
+
+```
+SET [GLOBAL | SESSION] TRANSACTION ISOLATION LEVEL <isolation-level>
+# isolation-level的可选值是READ UNCOMMITTED，READ COMMITTED，REPEATABLE READ，SERIALIZABLE
+```
+
+查询隔离级别
+
+```
+select @@tx_isolation;
+select @@global.tx_isolation;
+```
+
 ### 视图
 
 视图只包含使用时动态检索数据的查询
