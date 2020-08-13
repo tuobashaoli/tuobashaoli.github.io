@@ -61,6 +61,13 @@ select @@tx_isolation;
 select @@global.tx_isolation;
 ```
 
+#### 开启事务
+
+```
+set autocommit=off
+start transaction
+```
+
 ### 视图
 
 视图只包含使用时动态检索数据的查询
