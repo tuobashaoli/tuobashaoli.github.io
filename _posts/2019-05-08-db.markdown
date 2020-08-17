@@ -162,7 +162,7 @@ server-id=1
 
 ```mysql
 create user 'rep1'@'slave address' indetified by 'password';
-grant replication slave on *.* to 'rep1'@'slave address';
+grant replication slave on *.* to 'rep1'@'slave address'; #slave可以复制
 ```
 
 3. 获取master的二进制日志和数据库备份
@@ -255,7 +255,7 @@ grant select on mysql.tables_priv to 'username'@'maxscalehost';
 grant select on mysql.colums_priv to  'username'@'maxscalehost';
 grant select om mysql.proxies_priv to  'username'@'maxscalehost';
 grant show databases on *.* to 'username'@'maxscalehost';
-grant replication client on *.* to 'username'@'maxscalehost';
+grant replication client on *.* to 'username'@'maxscalehost'; #复制用户可以使用 SHOW MASTER STATUS, SHOW SLAVE STATUS和 SHOW BINARY LOGS来确定复制状态
 ```
 
 修改MaxScale中的配置文件
