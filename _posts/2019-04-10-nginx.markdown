@@ -46,6 +46,28 @@ server {
 }
 ```
 
+反向代理支持跨域,在跨域时，options 请求需要返回全部相关 header 和 204，非 option 必须返回 Access-Control-Allow-Origin 然后继续处理;origin 是请求必要的 header
+
+```
+location ~ \.php$ {
+
+    if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET,POST,OPTIONS,PUT,DELETE' always;
+        add_header 'Access-Control-Allow-Headers' '*' always;
+        add_header 'Access-Control-Max-Age' 1728000 always;
+        add_header 'Content-Length' 0;
+        add_header 'Content-Type' 'text/plain; charset=utf-8';
+        return 204;
+    }
+
+    if ($request_method ~* '(GET|POST|DELETE|PUT)') {
+        add_header 'Access-Control-Allow-Origin' '*' always;
+    }
+
+}
+```
+
 # 二、安装
 ### 使用包管理器安装
 ```
