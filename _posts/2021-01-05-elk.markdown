@@ -74,3 +74,78 @@ output.logstash:
 
 以上，从源日志文件/var/log/nginx/*.log，经过filebeat、logstash到elasticsearch，然后登陆kibana，新建索引，就可以查看日志了
 
+
+# logstash
+
+信息流，input -> decode -> filter -> encode -> output
+
+##基本配置
+
+本质上是ruby书写的DSL，
+
+
+```yaml
+input {
+	file{
+		path => ["/var/log/nginx/*.log"]
+		type => "system"
+		start_position => "beginning"
+		discover_interval => 15
+		sincedb_path => $HOME/.sincedb
+		stat_interval => 1
+	}
+	tcp {
+		port => 8888
+		mode => "server"
+		ssl_enable => false
+	}
+
+	# 实际监听系统日志的时候，建议使用tcp监听，并用grok过滤
+	syslog {
+		port => "514"
+	}
+
+}
+
+filter{
+    # grok使用正则表达式,并且内置了一些正则集
+	# match => {
+	#	"message" => "%{WORD} %{NUMBER:request_time:float} %{WORD}"
+	#}
+	grok {
+		match => ["message","%{HTTPDATE:logdate}"]
+	}
+	date {
+		match => ["logdate","dd/MMM/yyy:HH:mm:ss Z"]
+	}
+	geoip{
+		source => "message"
+	}
+	json {
+		source => "message"
+		target => "jsoncontent"
+	}
+	# 还有mutate、ruby、split
+}
+
+output{
+	elasticsearch {
+		hosts => ["elasticsearch:9200"]
+	}
+	exec {
+		command => "echo 1"
+	}
+	# 保存成文件
+	file{
+		path => "/path/to/%{+yyyy/MM/dd/HH}/%{host}.log.gz"
+		message_format => "%{message}"
+		gzip => true
+	}
+	# 发送出去
+	tcp {
+		host => "172.17.0.1"
+		port => 8888
+		codec => json_lines
+	}
+}
+```
