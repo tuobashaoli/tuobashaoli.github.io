@@ -79,13 +79,14 @@ output.logstash:
 
 信息流，input -> decode -> filter -> encode -> output
 
-##基本配置
+##  基本配置
 
 本质上是ruby书写的DSL，
 
 
 ```yaml
 input {
+	# 监听日志文件，最常用，使用sincedb数据库存储文件的inode，pos等信息
 	file{
 		path => ["/var/log/nginx/*.log"]
 		type => "system"
@@ -94,6 +95,7 @@ input {
 		sincedb_path => $HOME/.sincedb
 		stat_interval => 1
 	}
+	# 监听tcp的端口发送过来的文本，此时可以用telnet交互式发送字符或者用nc直接发送文本
 	tcp {
 		port => 8888
 		mode => "server"
@@ -109,31 +111,61 @@ input {
 
 filter{
     # grok使用正则表达式,并且内置了一些正则集
-	# match => {
-	#	"message" => "%{WORD} %{NUMBER:request_time:float} %{WORD}"
-	#}
+	match => {
+		"message" => "%{WORD} %{NUMBER:request_time:float} %{WORD}"
+	}
+	# 内置了时间戳转换的匹配方式
 	grok {
 		match => ["message","%{HTTPDATE:logdate}"]
 	}
 	date {
 		match => ["logdate","dd/MMM/yyy:HH:mm:ss Z"]
 	}
+	# 查询公网ip的地址
 	geoip{
 		source => "message"
 	}
+	# 过滤出日志中json格式部分
 	json {
 		source => "message"
 		target => "jsoncontent"
 	}
-	# 还有mutate、ruby、split
+	# 生成数据，用于测试logstash的性能
+	generator {
+		count => 10000
+		message => '{"hello":"world"}'
+		codec => json
+	}
+	# 数据类型修改
+	mutate {
+		# 将 request_time转换成浮点数
+		convert => ["request_time","float"]
+		# 将 message按|符号分割
+		split => ["message","|"]
+		# 
+		gsub => ["urlparams","[\\?#]","_"]
+		# 连接分割后的数组
+		join => ["message",","]
+		# 去除前后空格
+		strip => ["syslog_message"]
+		# 转成小写字母
+		lowercase => ["message"]
+	}
+	# 随意处理,event是logstash解析后的事件对象
+	ruby {
+		init => "@kname=['client']"
+		code => "event.append(Hash[@kname.zip(event['message'].split('|'))])"
+	}
 }
 
 output{
+	# 将日志输出到elasticsearch
 	elasticsearch {
 		hosts => ["elasticsearch:9200"]
 	}
+	# 调用系统命令
 	exec {
-		command => "echo 1"
+		command => "echo \"%{message}\" "
 	}
 	# 保存成文件
 	file{
@@ -147,5 +179,11 @@ output{
 		port => 8888
 		codec => json_lines
 	}
+	stdout {
+		codec => rubydebug
+		workers => 2
+	}
 }
 ```
+
+
