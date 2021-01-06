@@ -110,7 +110,7 @@ input {
 }
 
 filter{
-    # grok使用正则表达式,并且内置了一些正则集
+	# grok使用正则表达式,并且内置了一些正则集
 	match => {
 		"message" => "%{WORD} %{NUMBER:request_time:float} %{WORD}"
 	}
@@ -186,4 +186,59 @@ output{
 }
 ```
 
+## 扩展方案
 
+运行在应用服务器上，制作读取转发，这个叫shipper，运行在独立服务器上，完成数据解析，这个叫indexer。
+
+### redis
+
+通过如下配置，就可以在redis中使用发送消息
+
+```
+input {
+	redis {
+		# 使用正则订阅消息
+		data_type => "pattern_channel"
+		key => "logstash-*"
+		host => "192.168.0.1"
+		port => 6379
+		threads => 5
+	}
+}
+```
+
+`publish logstash-chan '{"hello":"world"}'`
+
+
+但是，如果多个logstash都这么订阅，就会造成消息重复，于是，修改
+
+```
+input {
+	redis {
+		batch_count => 1
+		data_type => "list"
+		key => "logstash-list"
+		host => ""
+		port => ""
+		threads => 5
+	}
+}
+```
+
+`rpush logstash-list "hello world"`
+
+同时，可以将logstash输出到redis
+
+```
+output{
+
+	redis{
+		data_type => "channel"
+		key =>"logstash-chan-%{+yyyy.MM.dd}"
+	}
+}
+```
+
+在redis上发布订阅，`subscribe logstash-chan-2021.01.06`，然后再logstash输入字符，就可以在redis看到输出
+
+那么实际使用中，就可以让一个logstash输入到redis，另一个从redis读取。
