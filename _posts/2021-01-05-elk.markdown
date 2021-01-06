@@ -1,0 +1,76 @@
+---
+categories: blog
+date: '2021-01-05  15:52:18'
+description: elk
+layout: post
+published: True
+title: "elk"
+---
+
+
+# 部署
+
+```
+# 自定义子网
+docker network create --subnet=192.168.254.16/24 elknet
+
+#single-node为非生产模式，会减少一些检查
+docker run -d --name elasticsearch --net elknet -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" elastcisearch:7.10.1
+
+docker run -d --name kibana --net elknet -p 5601:5601 kibana:7.10.1
+
+# 主要是将配置文件映射到容器里面，可以在logstash.yml中自定义配置文件目录
+docker run -d -p 5044:5044 --name logstash --net elknet -v ${local}/logstash.yml:/usr/share/logstash/config/logstash.yml -v ${local}/conf.d/:/usr/share/logstash/conf.d/ logstash:7.10.1
+
+#主要讲日志文件和配置文件映射到容器
+docker run --name filebeat --user=root -d --net elknet --volume="{nginx-path}:/var/log/nginx/" --volume="{path}/filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro" --volume="/var/lib/docker/containers:/var/lib/docker/containers:ro" --volume="/var/run/docker.sock:/var/run/docker.sock:ro" store/elastic/filebeat:7.1.1
+```
+
+其中参考的logstash.yml
+
+```
+path.config: /usr/share/logstash/conf.d/*.conf
+path.logs: /var/log/logstash
+```
+
+具体的logstash的配置,表示从filebeat获取输入，将结果输出到elasticsearch
+```
+input{
+beats{
+port => 5044
+codec => "json"
+}
+}
+output{
+elasticsearch{
+hosts => ["elasticsearch:9200"]
+}
+stdout{
+codec => rubydebug
+
+}
+}
+```
+
+参考的filebeat的配置,可从 https://raw.githubusercontent.com/elastic/beats/7.10/deploy/docker/filebeat.docker.yml下载
+
+```
+filebeat.config:
+  modules:
+    path: ${path.config}/modules.d/*.yml
+    reload.enabled: false
+
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+
+processors:
+- add_cloud_metadata: ~
+
+output.logstash:
+  hosts: ['logstash:5044']
+```
+
+以上，从源日志文件/var/log/nginx/*.log，经过filebeat、logstash到elasticsearch，然后登陆kibana，新建索引，就可以查看日志了
+
