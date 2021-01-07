@@ -249,6 +249,28 @@ output.redis：
   key: logstash-message
 ```
 
+当然，也可以使用kafka做消息队列
+
+```
+output.kafka:
+  hosts: ["172.16.29.128:9092"]
+  topic: test
+```
+
+这样在logstash，就要订阅kafka了
+
+```
+input{
+	kafka{
+		bootstrap_servers => ["127.0.0.1:9092"]
+		topics => "test"
+		group_id => "logstash"
+		consumer_threads => 5
+		decorate_events  => true
+	}
+}
+```
+
 **最终的信息流**
 
 log --> filebeat  --> redis --> logstash --> elasticsearch
