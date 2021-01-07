@@ -241,4 +241,14 @@ output{
 
 在redis上发布订阅，`subscribe logstash-chan-2021.01.06`，然后再logstash输入字符，就可以在redis看到输出
 
-那么实际使用中，就可以让一个logstash输入到redis，另一个从redis读取。
+那么实际使用中，就可以让一个logstash输入到redis，另一个从redis读取，只需要key是相匹配即可。由于logstash比较占用性能，于是，就使用filebeat，将日志输出到redis中去，修改filebeat中输出部分的配置如下,默认是list模式
+
+```
+output.redis：
+  hosts: ["redis:6379"]
+  key: logstash-message
+```
+
+**最终的信息流**
+
+log --> filebeat  --> redis --> logstash --> elasticsearch
