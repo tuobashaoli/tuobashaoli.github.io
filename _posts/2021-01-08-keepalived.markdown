@@ -4,7 +4,7 @@ date: '2021-01-08  10:17:18'
 description: keepailved
 layout: post
 published: True
-title: "keepailved"
+title: "keepailved and lvs"
 ---
 
 ## 部署
@@ -28,6 +28,14 @@ title: "keepailved"
 3.比较IP地址。在没有Ip地址拥有者和优先级相同的情况下，IP地址大的作为主路由器。
 
 ## 配置
+
+部署keepalived的服务器需要网卡开启多播功能，并且iptables需要允许vrrp多播
+
+```
+iptables -A INPUT -p vrrp -j ACCEPT
+```
+
+一般关闭防火墙，避免防火墙拦截请求
 
 ```
 cat /etc/keepalived/keepalived.conf
@@ -62,3 +70,136 @@ vrrp_instance VI_1 {
 ```
 
 默认日志在/var/log/messages文件中
+
+## LVS
+
+### LVS NAT
+
+ipvs运行在iptables中的input链中，对比请求中的ip，转发到postrouting链中，发送给后台真实的ip
+
+
+缺点：对Director Server压力会比较大，请求和响应都需经过director server
+
+
+### LVS DR
+
+过为请求报文重新封装一个MAC首部进行转发，源MAC是DIP所在的接口的MAC，目标MAC是某挑选出的RS的RIP所在接口的MAC地址；源IP/PORT，以及目标IP/PORT均保持不变
+
+缺点： RS和DS必须在同一机房中
+
+### LVS Tun
+
+在原有的IP报文外再次封装多一层IP首部，内部IP首部(源地址为CIP，目标IIP为VIP)，外层IP首部(源地址为DIP，目标IP为RIP)
+
+### 调度算法
+
+#### 轮询调度
+
+#### 加权轮询
+
+#### 原地址hash
+
+#### 目标地址hash
+
+#### 最少连接
+
+#### 加权最短连接
+
+#### 最短期望延迟
+
+#### 永不排队
+
+#### 基于局部性的最少连接
+
+#### 带复制的基于局部性最少链接
+
+### 配置
+
+配合keepalived，实际上是在keepalived中的添加配置
+
+```
+global_defs {
+   notification_email {
+         edisonchou@hotmail.com
+   }
+   notification_email_from sns-lvs@gmail.com
+   smtp_server 192.168.80.1
+   smtp_connection_timeout 30
+   router_id LVS_DEVEL  # 设置lvs的id，在一个网络内应该是唯一的
+}
+vrrp_instance VI_1 {
+    state MASTER   #指定Keepalived的角色，MASTER为主，BACKUP为备 记得大写
+    interface eno16777736  #网卡id 不同的电脑网卡id会有区别 可以使用:ip a查看
+    virtual_router_id 51  #虚拟路由编号，主备要一致
+    priority 100  #定义优先级，数字越大，优先级越高，主DR必须大于备用DR
+    advert_int 1  #检查间隔，默认为1s
+    authentication {   #这里配置的密码最多为8位，主备要一致，否则无法正常通讯
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        192.168.1.200  #定义虚拟IP(VIP)为192.168.1.200，可多设，每行一个
+    }
+}
+# 定义对外提供服务的LVS的VIP以及port
+virtual_server 192.168.1.200 80 {
+    delay_loop 6 # 设置健康检查时间，单位是秒
+    lb_algo rr # 设置负载调度的算法为wlc
+    lb_kind DR # 设置LVS实现负载的机制，有NAT、TUN、DR三个模式
+    nat_mask 255.255.255.0
+    persistence_timeout 0
+    protocol TCP
+    real_server 192.168.1.130 80 {  # 指定real server1的IP地址
+        weight 3   # 配置节点权值，数字越大权重越高
+        TCP_CHECK {
+        connect_timeout 10
+        nb_get_retry 3
+        delay_before_retry 3
+        connect_port 80
+        }
+    }
+    real_server 192.168.1.131 80 {  # 指定real server2的IP地址
+        weight 3  # 配置节点权值，数字越大权重越高
+        TCP_CHECK {
+        connect_timeout 10
+        nb_get_retry 3
+        delay_before_retry 3
+        connect_port 80
+        }
+     }
+}
+```
+
+注意，如果使用DR的LVS负载机制，就需要在转发的nginx服务器上，添加lo网络接口多播的虚拟ip监听，开启的脚本如下，执行`bash functions start`,启动后，就可以再看lo网络接口中监听192.168.1.200的请求了，
+
+```
+#虚拟的vip 根据自己的实际情况定义
+SNS_VIP=192.168.1.200
+/etc/rc.d/init.d/functions
+case "$1" in
+start)
+       ifconfig lo:0 $SNS_VIP netmask 255.255.255.255 broadcast $SNS_VIP
+       /sbin/route add -host $SNS_VIP dev lo:0
+       echo "1" >/proc/sys/net/ipv4/conf/lo/arp_ignore
+       echo "2" >/proc/sys/net/ipv4/conf/lo/arp_announce
+       echo "1" >/proc/sys/net/ipv4/conf/all/arp_ignore
+       echo "2" >/proc/sys/net/ipv4/conf/all/arp_announce
+       sysctl -p >/dev/null 2>&1
+       echo "RealServer Start OK"
+       ;;
+stop)
+       ifconfig lo:0 down
+       route del $SNS_VIP >/dev/null 2>&1
+       echo "0" >/proc/sys/net/ipv4/conf/lo/arp_ignore
+       echo "0" >/proc/sys/net/ipv4/conf/lo/arp_announce
+       echo "0" >/proc/sys/net/ipv4/conf/all/arp_ignore
+       echo "0" >/proc/sys/net/ipv4/conf/all/arp_announce
+       echo "RealServer Stoped"
+       ;;
+*)
+       echo "Usage: $0 {start|stop}"
+       exit 1
+esac
+exit 0
+```
+
