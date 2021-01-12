@@ -82,8 +82,8 @@ dbfilename dump.rdb #快照文件名
 
 dir ./ #快照文件保存路径，示例：dir "/apps/redis/data"
 
-# replicaof <masterip> <masterport>  #指定复制的master主机地址和端口，5.0版之前的指令为slaveof 
-# masterauth <master-password> #指定复制的master主机的密码
+#replicaof <masterip> <masterport>  #指定复制的master主机地址和端口，5.0版之前的指令为slaveof 
+#masterauth <master-password> #指定复制的master主机的密码
 
 replica-serve-stale-data yes #当从库同主库失去连接或者复制正在进行，从机库有两种运行方式：
 1、设置为yes(默认设置)，从库会继续响应客户端的读请求，此为建议值
@@ -172,5 +172,123 @@ OK
 
 ### 持久化
 
+### 原理
+
+#### 数据结构
+
+##### 简单动态字符串SDS
+
+```C
+struct sdshdr{
+	int len;//buf中字符数组的长度
+	int free;//buf中未使用的字节数量
+	char buf[];
+}
+```
+
+空间预分配，修改sds时，如果修改后的sds的长度小于1MB，那么程序分配和len相同大小的未使用空间，否则，分配1MB的未使用空间；
+惰性空间释放，当缩短字符串时，将释放的空间当做未使用字节。
 
 
+##### 链表
+
+```
+typedef struct list {
+	listNode * head;
+	listNode * tail;
+	unsigned long len;
+	void *(*dup)(void *ptr);
+	void (*free)(void *ptr);
+	int (*match)(void *ptr,void *key);
+}list;
+```
+
+##### 字典
+
+```C
+typedef struct dictht{
+	dictEntry **table;
+	//哈希表大小
+	unsigned long size;
+	//哈希表大小掩码，总是size-1,和size-1与，等于和size取余，位运算效率高
+	unsigned long sizemask;
+	//哈希表已有节点数量
+	unsigned long used;
+}dictht;
+```
+
+```C
+typedef struct dictEntry{
+	void *key;
+	union {
+		void *val;
+		unit64_tu64;
+		int64_ts64;
+	} v;
+	struct dictEntry *next;
+}
+```
+
+```C
+typedef struct dict {
+	dictType *type;
+	void *privdata;
+	dictht ht[2];
+	int rehashidx;
+}dict;
+```
+
+hash冲突时，使用链地址方法解决冲突，并且将新的键值对插入链表头，时间为O(1)
+
+为了维护负载因子，需要对哈希表进行rehash，如果是扩展操作，ht[1]为第一个>=ht[0].used*2的2^n (2的n次方幂)，如果是收缩，ht[1]大小为第一个大于等于ht[0].used的2^n ;将ht[0]中的值重新计算hash放到ht[1]；释放ht[0]，将ht[1]和ht[0]互换。
+扩容条件：没有执行BGSAVE或者BGREWRITEAOF，并且哈希表的负载因子大于等于1；执行BGSAVE或者BGREWRITEAOF，且负载因子大于等于5
+缩容条件：负载因子小于0.1
+
+##### 跳跃表
+
+平均O(logN)、最坏O(N)的查找
+
+使用场景
+- 有序集合键
+- 集群节点中内部数据结构
+
+##### 整数集合intset
+
+保存整数，int16_t、int32_t或者int64_t，保证集合中不会出现重复元素
+
+```C
+typedef struct intset{
+	uint32_t encoding;
+	uint32_t length;
+	int8_t contents[];
+}intset;
+```
+
+##### 压缩列表
+
+为了节约内存,格式如下
+
+zlbytes,zltail,zllen,entry1,entry2,...,entryN,zlend
+
+#### 对象
+
+```C
+typedef struct redisObject {
+	// 对象类型，可选值是REDIS_STRING、REDIS_LIST、REDIS_HASH、REDIS_SET、REDIS_ZSET
+	unsigned type:4;
+	// 编码，每种类型都提供了至少俩种编码
+	unsigned encoding:4;
+	void *ptr;
+	// ...
+}robj;
+```
+
+```redis
+redis> set msg "hello world" #键是字符串对象，值是字符串对象
+redis> rpush numbers 1 3 5#键是字符串对象，值是列表对象
+redis> hmset profile name Tom age 25 career Prohrammer #键是字符串对象，值是哈希对象
+redis> sadd fruits apple banana #键是字符串对象，值是集合对象
+redis> zadd price 8.5 apple 5.0 #键是字符串对象，值是有序集合对象
+```
+
+#####
