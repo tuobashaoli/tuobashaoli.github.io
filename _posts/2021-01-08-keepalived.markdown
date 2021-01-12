@@ -61,7 +61,7 @@ vrrp_instance VI_1 {
         auth_pass 1111      #密码
 }
     virtual_ipaddress {
-        10.0.0.3            #虚拟ip
+        10.0.0.3            #虚拟ip，实际上选取的虚拟ip尽量和选定的网卡中的ip在同一个子网中
     }
 	track_script  {
     	check
