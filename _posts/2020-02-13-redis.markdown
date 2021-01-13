@@ -537,3 +537,35 @@ client-output-buffer-limit normal 0 0 0
 client-output-buffer-limit slave 256mb 64mb 60
 client-output-buffer-limit pubsub 32mb 8mb 60
 ```
+
+### 服务器
+
+#### 命令执行器
+
+redisCommand
+
+name|命令名字，比如set
+proc|实现函数指针
+arity|命令参数个数
+sflags|标识，读命令、写命令、是否允许载入时使用
+flags|sflags的二进制标识
+calls|服务器总共执行次数
+milliseconds|执行命令总耗时
+
+预备操作
+- cmd指针是否指向NULL
+- 检查参数是否正确
+- 检查客户端是否经过认证
+- 打开maxmemory设置，就会检查内存占用
+- 如果 bgsave出错、服务器打开stop-writes-on-bgsave-error、服务器执行一个写命令，那么服务器将拒绝这个命令
+- 如果服务器正在载入数据，那么标识为I的命令才能执行
+- 。。。
+
+调用命令的实现函数
+
+后续操作
+- 添加慢查询日志
+- 写入命令耗时
+- 写入aof
+- 发送给从服务器
+
