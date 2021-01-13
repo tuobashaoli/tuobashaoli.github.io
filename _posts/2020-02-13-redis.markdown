@@ -473,3 +473,67 @@ io多路复用将产生事件的套接字放到一个队列，有序、同步、
 - timeProc
 
 实现
+
+服务器将所有的时间事件都存放一个无序列表，无序指的是不按照时间的时间排序，
+
+serverCron事件
+- 更新服务器各类统计信息，比如时间、内存、数据库占用
+- 清理数据库中的过期键值对
+- 关闭和清理失效的连接客户端
+- 尝试aof或rdb持久化
+- 主服务器对从服务器的同步
+- 对集群定期同步和连接测试
+
+redis.conf中的hz选项可以配置运行频率
+
+### 客户端
+
+#### 通用属性
+
+套接字描述符`fd`
+- -1，伪客户端，读取aof和处理lua脚本
+- 大于-1的整数，普通客户端
+
+`CLIENT list`列出所有的客户端
+
+名字，默认是空，可以使用`client setname hello`设置名字
+
+标志，flags，
+- REDIS_MASTER 客户端是一个主服务器
+- REDIS_BLOCKED 客户端正在被列表命令阻塞
+- REDIS_MULTI | REDIS_DIRTY_CAS 客户端正在执行事务，但事务的安全性已经被破坏
+- REDIS_SLAVE | REDIS_PRE_PSYNC 客户端是从服务器
+
+输入缓冲区
+客户端发送的命令都会先缓存到这个区
+```
+typedef struct redisClient {
+	sds querybuf;
+}
+```
+
+输出缓冲区
+```
+typedef struct redisClient{
+    // 固定缓冲区，保存比较小的回复，默认大小16KB
+	char buf[REDIS_REPLY_CHUNK_BYTES];
+	int bufpos;
+
+	// 可变缓冲区由reply列表或多个字符串组成
+	list *reply
+}
+```
+
+authenticated，配置文件中的requirepass设置是否需要密码认证
+- 0 客户端未认证
+- 1 客户端已认证
+
+obuf_soft_limit_reached_time，软性限制时间，输出缓冲区大小超过软性限制，记录此时间，当时长超过限制，关闭客户端
+
+`client-output-buffer-limit <class> <hard limit> <soft limit> <soft seconds>`
+
+```
+client-output-buffer-limit normal 0 0 0
+client-output-buffer-limit slave 256mb 64mb 60
+client-output-buffer-limit pubsub 32mb 8mb 60
+```
