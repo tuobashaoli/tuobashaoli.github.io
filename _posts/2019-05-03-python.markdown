@@ -1084,3 +1084,192 @@ else:
         break
 RESULT = _r
 ```
+
+## PyCodeObject
+
+python源码编译后，生成一个pyc文件，存放着PyCodeObject对象
+
+编译的时候，对于代码中的一个代码块，会创建一个PyCodeObject对象与这个段代码对应，当进入一个新的命名空间，或者说作用域，就算是新的代码块
+
+命名空间是符号的上下文环境，符号的含义取决于命名空间
+
+```c
+typedef struct {
+    PyObject_HEAD
+    int co_argcount;        /* 位置参数个数 */
+    int co_nlocals;         /* 局部变量个数 */
+    int co_stacksize;       /* 栈大小 */
+    int co_flags;   
+    PyObject *co_code;      /* 字节码指令序列 */
+    PyObject *co_consts;    /* 所有常量集合 */
+    PyObject *co_names;     /* 所有符号名称集合 */
+    PyObject *co_varnames;  /* 局部变量名称集合 */
+    PyObject *co_freevars;  /* 闭包用的变量名集合 */
+    PyObject *co_cellvars;  /* 内部嵌套函数引用的变量名集合 */
+    /* The rest doesn’t count for hash/cmp */
+    PyObject *co_filename;  /* 代码所在文件名 */
+    PyObject *co_name;      /* 模块名|函数名|类名 */
+    int co_firstlineno;     /* 代码块在文件中的起始行号 */
+    PyObject *co_lnotab;    /* 字节码指令和行号的对应关系 */
+    void *co_zombieframe;   /* for optimization only (see frameobject.c) */
+} PyCodeObject;
+```
+
+在python代码中，PyCodeObject对象可以通过`__code__`属性查看，以下是在交互命令行中查看
+
+```python
+def h():
+    print(1)
+
+dir(h.__code__)
+
+['__class__', '__delattr__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 'co_argcount', 'co_cellvars', 'co_code', 'co_consts', 'co_filename', 'co_firstlineno', 'co_flags', 'co_freevars', 'co_kwonlyargcount', 'co_lnotab', 'co_name', 'co_names', 'co_nlocals', 'co_stacksize', 'co_varnames']
+```
+
+## pyc生成
+
+主要包括三个部分
+
+- magic number
+	- 魔数，用于和解释器自己的魔数比较，避免版本不同导致字节码指令集不兼容而无法正常运行程序
+- pyc文件创建时间
+	- 可以用于判定是否需要重新编译出pyc
+- PyCodeObject对象
+	- 先写入类型，比如TYPE_CODE，TYPE_INT，
+	- 对数值的写入，将数值转换成16进制
+	- 写入字符串，这个比较麻烦。。。
+
+字节码
+
+python2.5一共有104条字节码指令
+
+官方提供dis模块，可以解析字节码
+
+```py
+def h():
+	a= 1
+	print(2)
+
+dis.dis(h)
+
+2         0 LOAD_CONST               1 (1)
+          2 STORE_FAST               0 (a)
+
+3         4 LOAD_GLOBAL              0 (print)
+          6 LOAD_FAST                0 (a)
+          8 CALL_FUNCTION            1
+         10 POP_TOP
+         12 LOAD_CONST               0 (None)
+         14 RETURN_VALUE
+```
+
+最左侧一列是字节码指令对应源码的位置，第二列是字节码在co_code中的偏移位置，第3列是字节码，最后一列显示字节码参数
+
+## 虚拟机框架
+
+字节码中没有执行环境，这里的**执行环境**包括命名空间，以及一些其他信息，虚拟机实际执行的是PyFrameObject。
+
+PyFrameObject结构
+
+```c
+typedef struct _frame {
+	PyObject_VAR_HEAD
+	struct _frame *f_back; // 执行环境链上的前一个frame
+	PyCodeObject *f_code;
+	PyObject *f_builtins; //builtins命名空间
+	PyObject *f_globals;//global命名空间
+	PyObject *f_locals; //local命名空间
+	PyObject **f_valuestack; //运行时栈的栈底位置
+	PyObject **f_stacktop; //运行时栈的栈顶位置
+	...
+	int f_lasti; //上一个字节码指令在f_code中的偏移
+	int f_lineno;//当前字节码对应的源码行数
+	...
+	PyObject *f_localsplus[1];//动态内存，维护局部变量、cell对象集合、free对象集合、运行时栈所需要的空间
+}
+```
+
+可以使用如下方法获取当前活跃的PyFrameObject对象
+
+```
+import sys
+frame = sys._getframe()
+dir(frame)
+
+['__class__', '__delattr__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 'clear', 'f_back', 'f_builtins', 'f_code', 'f_globals', 'f_lasti', 'f_lineno', 'f_locals', 'f_trace', 'f_trace_lines', 'f_trace_opcodes']
+```
+
+赋值语句就是建立约束的地方，约束的容身之所就是命名空间，命名空间是用PyDictObject实现的。
+
+一个module内部，可能有多个命名空间，每个命名空间都和一个作用域相对应，作用域仅由源程序的文本决定。
+
+最内嵌套作用域规则：
+LEGB：Local、Enclosing、Global、Builtin
+
+### PyEal_EvalFramEx
+
+遍历字节码指令序列：
+- first_instr：字节码指令序列开始 
+- f_lasti：上一条已经执行的字节码在co_code中的所以
+- next_instr：指向下一条待执行的字节码指令位置
+
+python中的一个线程就是操作系统上的原生线程
+- 一个线程有一个PyThreadState对象，
+- PyInterpreterState是python中进程的抽象
+
+## 多线程机制
+
+全局解释器锁GIL
+- 时钟中断，即执行了多少个指令后，进行线程线程调度，`sys.getcheckinterval()`,默认是100
+
+
+thread模块
+- start_new_thread对应`thread_PyThread_start_new_thread`
+	- 初始化bootstate结构boot，保存线程一切信息
+	- 初始化Python多线程环境
+		- 创建GIL，结构体是NRMUTEX
+			- owned
+			- thread_id
+			- hevent
+				- 在win32环境下，hevent就是Win32的Event对象
+		- 在获取GIL时，通过参数waitflag，0，python会检查GIL是否可用，通过owned值，如果为-1，表示可以获得
+		- 当释放GIL时，会通知所有等待中的进程，至于唤醒哪个进程，就在操作系统自己的实现
+	- 以boot为参数，创建操作系统原生线程
+
+
+
+## 内存管理
+
+### 内存分配
+
+### 垃圾收集
+
+主要是引用计数，标记清除和分代收集是为了打破循环引用的补充计数
+
+#### 可收集对象链表
+
+被垃圾收集机制监控的container对象
+
+- PyGC_HEAD
+- PyObject_HEAD
+- Container object
+
+其中PyGC_Head，除了包含可收集对象链表的前后指针外，还包含gc_ref
+
+#### 分代收集
+
+在python中，有三代，实际是维护了三个链表，_PyGC_generation0、_PyGC_generation1、_PyGC_generation2
+
+所有新创建的对戏都会被加入第0代链表中，第0代内存链表有700容量，一旦超过700，就会触发内存回收
+
+当对第1代进行回收前，会将第0代的链表merge到第1代后面，对第2代回收也是如此
+
+#### 寻找root object集合
+
+有效引用计数，即将循环引用去除，A引用了B，B引用了A，那么A、B的游戏引用计数就是0，gc_ref就是这个值
+
+垃圾收集的第一步，就是遍历可收集对象链表，设置gc_ref，然后遍历container对象中的每一个引用，将这些引用对象的gc_ref减1，遍历完整个列表后，gc_ref不为0的对象，就是rootobject
+
+然后，从rootobject出发，沿着引用链，一步一步标记不能回收的内存，最终，形成俩个一条reachable链表和一条unreachable链表，
+
+对于unreachable链表，其中的对象，如果有`__del__`方法，那么就将其移到garbage的PyLiastObject对象中
