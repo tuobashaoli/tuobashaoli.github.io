@@ -1242,6 +1242,63 @@ thread模块
 
 ### 内存分配
 
+#### 小块空间的内存池
+
+##### block
+
+##### pool
+
+默认大小为系统的内存页，一般时4KB。一个pool管理着许多大小相同的block
+
+```C
+struct pool_header {
+	union {
+		block *_padding;
+		uint count;
+	}ref;
+	block *freeblock;
+	struct pool_header *nextpool;
+	struct pool_header *prevpool;
+	uint arenaindex;
+	uint szidx;
+	uint nextoffset;
+	uint maxnextoffset;
+}
+```
+
+在pool内，block可以连续申请，当其中一个block被释放的时候，为了避免内存不连续，将这些被释放的block按顺序组成链表，freeblock就是这个链表的头
+
+##### arena
+
+pool的集合就是arena，默认大小时256KB，即64个pool
+
+```C
+struct arena_object{
+	uptr address;
+	block* pool_address;
+	uint nfreepools;
+	uint ntotalpools;
+	struct pool_header* freepools;
+	struct arena_object* nextarena;
+	struct arena_object* prearena;
+}
+```
+
+多个arena构成数组，数组的首地址由arenas维护。
+
+当arena没有与pool建立联系的时候，这时的arena处于未使用的状态，一旦建立了联系，这时的arena就是可用状态
+
+##### usedpools
+
+默认的大小块内存的边界`SMALL_REQUEST_THRESHOLD`为256字节，当申请的内存小于256字节时，PyObject_Malloc会在内存池中申请，当大于时，就malloc
+
+pool状态
+- used 所有used pool都被usedpools管控
+- full
+- empty 所有的empty pool都被freepools管控
+
+
+
 ### 垃圾收集
 
 主要是引用计数，标记清除和分代收集是为了打破循环引用的补充计数
