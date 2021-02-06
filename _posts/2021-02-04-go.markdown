@@ -1,0 +1,223 @@
+---
+categories: blog
+date: '2021-02-04  22:40:18'
+description: gogogo
+layout: post
+published: True
+title: "Go"
+---
+
+# Goroutine
+
+## 协程结构体
+
+```c
+type g struct{
+	goid int64 //协程id
+	status uint32 //协程状态
+	stack struct {
+		lo uintptr //协程拥有的栈低位
+		hi uintptr //协程拥有的栈高位
+	}
+	sched gobuf //切换时保存的上下文信息
+	startfunc uintptr // 程序地址
+}
+
+type gobuf struct{
+	sp uintptr //栈指针位置
+	pc uintptr //运行到的程序位置
+}
+```
+
+一个协程代表了一个执行流, 执行流有需要执行的函数(对应上面的 func1), 有函数的入参(a1, a2), 有当前执行流的状态和进度(对应 CPU 的 PC 寄存器和 SP 寄存器), 当然也需要有保存状态的地方, 用于执行流恢复.
+
+# 数据类型
+
+## 数组
+
+```go
+var a [3]int
+var b = [...]int{1,2,3}
+var c = [...]int{2:3,1:2}
+var d = [...]int{1,2,4:5,6}
+```
+
+## 字符串
+
+```c
+type StringHeader struct{
+	Data uintptr
+	Len int
+}
+```
+
+## 切片
+
+```
+type SliceHeader struct {
+	Data uintptr
+	Len int
+	Cap int
+}
+```
+
+```go
+var a []int
+a = append(a,1)
+a = append(a,1,2,3)
+a = append(a,[]int{1,2,3})
+a = append([]int{0},a) #一般会导致内存重分配
+
+copy(a[i+1:],a[i:]) #将a[i:]向后移动一个位置
+a[i]=x
+
+# 删除
+a = a[:len(a)-1]
+a = a[:len(a)-N]
+a = append(a[:0],a[N:])
+```
+
+## 函数
+
+```
+func Add(a,b int) int{
+	return a+b
+}
+
+var Add = func(a,b int) int{
+	return a+b
+}
+
+func swap(a,b int)(int ,int){
+	return b,a
+}
+
+func sum(a int,more ...int) int{
+	for _,v := range more{
+		a += v
+	}
+	return a
+}
+
+# 返回值命名
+func Find(m map[int]int,key int)(value int,ok bool){
+	value ok = m[key]
+	return
+}
+
+func Inc()(v int){
+	defer func(){v++}()# 闭包，使用引用方式传参，在return之后执行
+	return 42
+}
+```
+
+## 方法
+
+面向对象
+
+```go
+# 将第一个参数移动到最前面，将函数Read设置为类型File拥有的方法
+func (f *File) Read(int64 offset,data []byte) int {
+
+}
+```
+
+使用组合解决了继承的特性
+
+```go
+import "image/color"
+type Point struct{X,Y float64}
+type ColorPoint struct{
+	Point
+	Color color.RGBA
+}
+```
+
+## 接口
+
+## 面向并发
+
+Goroutine是Go特有的并发体，是轻量级线程，从一个很小的栈2KB或者4KB，动态的伸缩栈的大小，拥有自己的调度器，半抢占式协作调度，
+
+原子操作
+
+顺序一致性，同一个Goroutine中，顺序一致性的内存模型是得到保证的，，但是不同的Goroutine之间，不满足顺序一致性，需要明确定义的同步事件，
+
+```go
+func main(){
+	done := make(chan int)
+	go func(){
+		println("hello world")
+		done <- 1
+	}()
+	<- done #当这句话执行的时候，done <- 1已经执行
+}
+```
+
+通道是在Goroutine之间同步的主要方法，对无缓存的通道进行的接收，发生在对该通道进行的发送完成前，有缓存的通道可用于控制并发执行的Goroutine最大数目
+
+```go
+var done = make(chan done)
+var msg string
+func aGoroutine(){
+	msg = "hello"
+	done <- true
+}
+func main(){
+	go aGoroutine()
+	<- done
+	println(msg)
+}
+
+```
+
+## 常见的并发模式
+
+不要通过共享内存来通信，而应该通过通信来共享内存
+
+```
+func main(){
+	var mu sync.Mutex
+	mu.Lock()
+	go func(){
+		fmt,Println("hello world")
+		mu.Unlock()
+	}()
+	mu.lock() #加锁时会被阻塞
+}
+
+func main(){
+	done  := make(chan int)
+	go func(){
+		fmt.Println("hello world")
+		<- done
+	}()
+	done <- 1
+}
+
+func main(){
+	var wg sync.WaitGroup
+	for i := 0;i < 10;i++ {
+		wg.Add(1)
+		go func(){
+			fmt.Println("hello")
+			wg.done()
+		}
+	}
+	wg.wait()
+}
+```
+
+同时处理多个通道的发送或接收操作，需要使用select关键字，当select多个分支的时，会随机选择一个可用的通道分支，如果没有可用的，选择default分支，否则一直阻塞
+
+```
+select {
+	case v := <- in:
+		fmt.Println(v)
+	case <- time.After(time.Second):
+		return //超时
+}
+
+// 阻塞main函数输出
+select {}
+```
