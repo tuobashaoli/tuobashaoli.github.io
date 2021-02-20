@@ -7,6 +7,8 @@ published: True
 title: "something about python"
 ---
 
+# 基础知识
+
 ### 使用函数名称调用函数(方法)
 
 ##### eval
@@ -1099,7 +1101,7 @@ typedef struct {
     int co_argcount;        /* 位置参数个数 */
     int co_nlocals;         /* 局部变量个数 */
     int co_stacksize;       /* 栈大小 */
-    int co_flags;   
+    int co_flags;
     PyObject *co_code;      /* 字节码指令序列 */
     PyObject *co_consts;    /* 所有常量集合 */
     PyObject *co_names;     /* 所有符号名称集合 */
@@ -1330,3 +1332,61 @@ pool状态
 然后，从rootobject出发，沿着引用链，一步一步标记不能回收的内存，最终，形成俩个一条reachable链表和一条unreachable链表，
 
 对于unreachable链表，其中的对象，如果有`__del__`方法，那么就将其移到garbage的PyLiastObject对象中
+
+
+## 使用C/C++开发模块
+
+```C
+//添加头文件
+#include <Python.h>
+#include <stdio.h>
+
+//编写对应的功能函数
+void fly(const char *name)
+{
+    printf("%s is flying.\n", name);
+}
+
+//添加python调用版本，在其中调用编写的功能函数
+static PyObject *bird_fly(PyObject *self, PyObject *args)
+{
+    const char *name;
+    if (!PyArg_ParseTuple(args, "s", &name))//把python对象的args转换为C对象name，s表示是string转换成char*，其他还有：i int->int，z string or None -> char*, O :object -> PyObject*，还可以解析字典元组之类的，{s:i,s:i} ：dict -> char*,int.char*,int
+        return NULL;
+    fly(name);//执行功能函数
+
+	//这里是返回值，因为功能函数没有返回值，所以返回Py_None
+	//如果是有返回值，那么需要使用Py_BuildValue将C对象转换成python对象，其中的格式和PyArg_ParseTuple一样
+	//return (PyObject*)Py_BuildValue("i",1);
+    Py_INCREF(Py_None);//显示地增加Py_None对象的引用计数
+    return Py_None;
+}
+
+//添加向Python呈现C函数的方法表bird_methods
+static PyMethodDef bird_methods[] = {
+    { "fly", bird_fly, METH_VARARGS, "Bird fly" },//分别是python解释器调用的函数名，实际执行的函数体，函数签名类型（一般是METH_VARARGS即元组的形式传参，无参数时METH_NOARGS，也可以METH_KEYWORD，即使用python字典形式传参），函数描述
+{ NULL, NULL, 0, NULL }
+};
+
+//添加模块初始化函数initbird，必须以init模块名 这样，这里使用的python2版本的初始化方式
+PyMODINIT_FUNC initbird(void)
+{
+    PyImport_AddModule("bird");
+    Py_InitModule("bird", bird_methods);
+}
+
+//python3使用如下形式
+/*
+static struct PyModuleDef BirdModule = {
+    PyModuleDef_HEAD_INIT,//默认
+    "bird",//模块名
+    NULL,
+    -1,
+    bird_methods //上面的数组
+};
+
+void PyInit_bird(void){
+    PyModule_Create(&BirdModule);
+}
+*/
+```
