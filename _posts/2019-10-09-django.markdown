@@ -4,7 +4,7 @@ title:  "Django"
 date:   2019-10-09 15:50:18
 categories: blog
 description: something about django
-published: true
+published: False
 ---
 
 ### 部署方式

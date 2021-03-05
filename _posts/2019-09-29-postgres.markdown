@@ -4,7 +4,7 @@ title:  "Postgresql!"
 date:   2019-09-29 18:46:18
 categories: blog
 description: it is for postgres
-published: true
+published: false
 ---
 
 ### 部署方式
