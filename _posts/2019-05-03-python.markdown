@@ -5,6 +5,7 @@ description: it is so pythonic
 layout: post
 published: True
 title: "something about python"
+tags: "pythonic"
 ---
 
 ## 基础知识

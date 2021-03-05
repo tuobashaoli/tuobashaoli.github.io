@@ -1,0 +1,39 @@
+---
+categories: blog
+date: '2021-03-05 10:03:18'
+description: it is so pythonic
+layout: post
+published: True
+title: "python线程和进程"
+tags: "pythonic"
+---
+
+### 唠叨话
+
+进程和线程应该是编程语言老生常谈的话题了，但是python在这俩个方面，只能说能用，不怎么关心，起码在早期的python原生的库中，相关的支持很简陋，比如thread库，基本的同步原语都没，感觉早期python目标场景，比如运维领域，不需要多进程、多线程，后来，在需要高并发的场景，python又在不断迭代协程来实现
+
+### threading
+
+threading模块封装了很多的同步原语，
+
+- Lock
+	- 原始锁，实际上就是使用匿名信号量实现的，一般语言里面的原始锁可以由互斥量、临界区、信号量实现的，python这里选择了匿名信号量实现，也就是说，这个锁，谁(所有线程)都可以减去获取锁acquire、就是信号量减一，释放锁release、信号量加一
+- Rlock
+	- 重入锁RLock,相当于java的重入锁，基于Lock实现的，就是在acquire的时候记录当前线程id，release的时候判定线程是不是acquire的线程
+- condition，条件，维护一个锁Lock/RLock，和一个waiting池，线程通过acquire获得condition对象，当wait的时候，线程会释放condition内部的锁进入block状态，同时waiting池中记录这个线程，当notify，condition对象从waiting池中挑选一个线程，通知其acquire
+- Semaphore，信号量，基于Condition实现
+- BoundedSemaphore，防止Semaphore被无限释放
+- event 基于Condition，控制线程间运行顺序
+- Barrier 基于Condition，让特定线程先运行
+- Timer 基于Thread和Event实现，定时任务
+
+从锁上看，python原生库提供的支持很基础，而且没有特定的优化，相对于java在锁方面，大量运用CAS原语，提供各种字节码指令，优化各种并发情况下的同步操作，以达到高性能，python在这方面就很随意，为什么呢？因为python本身有着GIL，在多线程效率方面就天生有着限制，我觉得GIL就是对单核操作系统执行多进程的模拟，另外，如果说高并发的话，python可以用协程实现，比如tornado、asyncio，底层使用是IO多路复用、select/poll/epoll/kqueue等，不过老实说，在协程方面，python又不如go、scala、erlang等完善，python自己的协程框架asyncio的三方生态太少，单说高并发，也不及Go等
+
+
+创建线程调用链： start -> _thread._start_new_thread -> thread_Pythread_start_new_thread -> PyThread_start_new_thread -> pthread_create
+
+通过这个调用链看出，在linux，python的线程实现，就是通过pthread库函数创建的，是一种用户态的线程，和linux内核进程一对一
+
+### 线程池
+
+不管是线程池还是进程池，都要维护俩个核心东西：进(线)程队列和任务队列，进(线)程队列中的进程从任务队列中取任务去执行，为了取任务的时候，各个进(线)程不冲突，需要一个锁，并将结果返回给一个对象，一般都叫future对象。
