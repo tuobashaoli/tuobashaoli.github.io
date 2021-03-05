@@ -36,7 +36,9 @@ threading模块封装了很多的同步原语，
 
 ### 线程池
 
-不管是线程池还是进程池，都要维护俩个核心东西：进(线)程队列和任务队列，进(线)程队列中的进程从任务队列中取任务去执行，为了取任务的时候，各个进(线)程不冲突，需要一个锁，并将返回给一个对象，一般都叫future对象，后续通过这个future获取任务完成后的返回值。
+#### 一个基本模型
+
+不管是线程池还是进程池，都要维护俩个核心东西：**进(线)程队列**和**任务队列**，进(线)程队列中的进程从任务队列中取任务去执行，为了取任务的时候，各个进(线)程不冲突，需要一个**锁**，并将返回给一个对象，一般都叫**future对象**，后续通过这个future获取任务完成后的返回值。
 
 关于以上这个模型，有一个很好的现实场景对应，假设一个银行有三个功能一模一样的窗口(进/线程队列)，一群人（任务队列）去这个银行办理业务，这些都是领号，然后当某个窗口空了，大厅的屏幕上，就分配一个号对应的人，去那个窗口办理业务，这个分配号到窗口的系统，保证一次就只会把一个号分配到一个空闲的窗口，这就是锁的作用。
 
@@ -54,3 +56,93 @@ VIP客户2
 ```
 
 这里有个分配号到窗口的具体逻辑，如果是按照号的顺序去分配，就是典型的FIFO队列，java的ArrayBlockingQueue/LinkedBlockingQueue就是这样的，但是如果某些银行的vip客户，可以优先分配到空闲窗口，那么就是优先级队列，java的PriorityBlockingQueue就是这样实现的。当然，现实场景往往是俩者结合的，想想，如果优先级队列的优先级，按照任务入队列的时间顺序递减，那么不就是FIFO队列吗？还有一种队列，就是随机选客户，众生平等，这会让编程变得不可预期，所以实际应用应该很少，起码java好像没有这种队列
+
+#### ThreadPoolExecutor
+
+java中也有一个ThreadPoolExecutor实现线程池，感觉python像是直接参考过来的。
+
+结合上述模型，下面来分析源码，源码来自于github，我这里都是看的3.10-master上的代码，这里做了些省略
+
+```python
+class ThreadPoolExecutor(_base.Executor):
+
+    def __init__(self, max_workers=None, thread_name_prefix='',
+                 initializer=None, initargs=()):
+        """Initializes a new ThreadPoolExecutor instance.
+        Args:
+            max_workers: The maximum number of threads that can be used to
+                execute the given calls.
+            thread_name_prefix: An optional name prefix to give our threads.
+            initializer: A callable used to initialize worker threads.
+            initargs: A tuple of arguments to pass to the initializer.
+        """
+        if max_workers is None:
+            # ThreadPoolExecutor is often used to:
+            # * CPU bound task which releases GIL
+            # * I/O bound task (which releases GIL, of course)
+            #
+            # We use cpu_count + 4 for both types of tasks.
+            # But we limit it to 32 to avoid consuming surprisingly large resource
+            # on many core machine.
+            max_workers = min(32, (os.cpu_count() or 1) + 4)
+        if max_workers <= 0:
+            raise ValueError("max_workers must be greater than 0")
+
+        if initializer is not None and not callable(initializer):
+            raise TypeError("initializer must be a callable")
+
+        self._max_workers = max_workers #最大线程数
+        self._work_queue = queue.SimpleQueue() #任务队列，实际上就是个无界的FIFO队列
+        self._idle_semaphore = threading.Semaphore(0)
+        self._threads = set()# 线程队列
+        self._broken = False
+        self._shutdown = False
+        self._shutdown_lock = threading.Lock()
+        self._thread_name_prefix = (thread_name_prefix or
+                                    ("ThreadPoolExecutor-%d" % self._counter()))
+        self._initializer = initializer
+        self._initargs = initargs
+
+	def submit(self, fn, /, *args, **kwargs):
+        with self._shutdown_lock, _global_shutdown_lock:
+            if self._broken:
+                raise BrokenThreadPool(self._broken)
+
+            if self._shutdown:
+                raise RuntimeError('cannot schedule new futures after shutdown')
+            if _shutdown:
+                raise RuntimeError('cannot schedule new futures after '
+                                   'interpreter shutdown')
+
+            f = _base.Future()
+            w = _WorkItem(f, fn, args, kwargs)# 将函数转变成_WorkItem对象
+
+            self._work_queue.put(w) # 将任务入队
+            self._adjust_thread_count() #实际上是这个函数负责启动线程，也就是将任务放入线程去执行，对应的就是将一个客户分配给一个窗口，锁就是_idle_semaphore(信号量)
+            return f # 返回一个future对象,之后就是通过这个对象获取线程执行的结果
+
+	def shutdown(self, wait=True, *, cancel_futures=False):
+		# 关闭线程池，对应的场景就是银行下班了，窗口都不在服务了，只不过现实中窗口不会服务一半就直接停了
+        with self._shutdown_lock:
+            self._shutdown = True
+            if cancel_futures:
+                # Drain all work items from the queue, and then cancel their
+                # associated futures.
+                while True:
+                    try:
+                        work_item = self._work_queue.get_nowait()
+                    except queue.Empty:
+                        break
+                    if work_item is not None:
+                        work_item.future.cancel()
+
+            # Send a wake-up to prevent threads calling
+            # _work_queue.get(block=True) from permanently blocking.
+            self._work_queue.put(None)
+        if wait:
+            for t in self._threads:
+                t.join()
+```
+
+通过分析代码，发现python的线程池十分基础，既没有java的ThreadPoolExecutor的核心线程与非核心线程，也不支持除了FIFO的其他任务队列，又不是不能用
+
