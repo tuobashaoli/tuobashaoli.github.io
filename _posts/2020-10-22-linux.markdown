@@ -1,0 +1,55 @@
+---
+categories: blog
+date: '2020-10-22 15:52:18'
+description: 一次linux内核参数调整
+layout: post
+published: True
+title: "linux"
+tags: linux
+---
+
+# 问题
+最近，在jenkins上运行Android源码编译的时候，越来越多出现节点任务卡住、日志停止输出的现象。
+
+# 分析
+通过到节点上查看，发现节点的内存buffer/caches几乎都是满的，于是，执行命令清空所有的cache
+
+```
+echo 3 > /proc/sys/vm/drop_caches
+```
+
+任务直接失败了，虽然不再是卡住了，节点可以继续跑任务了，但是过了一阵子，还是会有概率复现之前的问题，于是，使用linux-ftools工具，查看cached里面有哪些内容，这个工具需要下载编译，参考地址 https://blog.51cto.com/lee90/1922951
+
+发现，是在使用repo下载Android项目源码的时候，会将整个源码缓存起来到cache，这个项目的源码将近100G，在默认情况下，几乎将内存给占满了，机器默认是128G内存，导致机器内存不足，
+
+# 解决
+
+通过查阅google，可以通过如下的三个内核参数保留足够的内存，
+
+```
+vm.min_free_kbytes = 4096000 #留下4G空闲内存
+vm.vfs_cache_pressure = 200 #这个值越大，越倾向于回收cache，这个是针对回收dentries和inode缓存
+vm.swappiness= 40 #表示使用swap的频率，越低就越倾向于使用物理内存
+```
+
+内核参数文件 `/etc/sysctl.conf`
+让修改的参数生效 `sysctl -p`
+查看内核参数 `sysctl -a`
+
+# 扩展
+
+## drop_caches
+
+当值为1的时候，会回收page cache
+当值为2的时候，会回收slab分配器中的对象，就是目录缓存和inode缓存
+当值为3的时候，会回收上面俩个
+
+注意，当内存中含有大量的cache，直接设置上面的参数为3的时候，可能会导致应用崩溃，因为某些应用，为了快速读取，往往会主动将数据缓存在cache中，而且不一定会执行sync，改这个参数需要慎重！
+
+## buffer/cache
+
+早期的buffer和cache是区分开来的，所以，现在到网上查，还是能找到说buffer/cache是分别用于读写的缓存块，但是linux2.4内核之后，就将二者合一了，所以使用free命令，往往看到二者都是在一起的。
+
+buffer 又叫buffer cache，块缓存，是io block的缓存，面向块设备，cahce又叫page cache，页缓存，面向文件，大部分的buffer cache都可由page cache表达，在有文件系统的linux中（实际上，大家都会给linux装文件系统的），二者都是合一的，在没有文件系统的linux，那么只有buffer cache，或者说，不直接操作文件系统的，比如用dd命令生成文件`dd if=/path/to/input of=/path/to/output`，只会有buffer cache
+
+
