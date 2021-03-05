@@ -4,7 +4,7 @@ title:  "Ruby it!"
 date:   2019-04-04 15:04:18
 categories: blog
 description: it is for ruby
-published: true
+published: false
 ---
 
 ##### Ruby元编程简介
