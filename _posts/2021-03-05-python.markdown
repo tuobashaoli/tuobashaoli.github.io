@@ -151,3 +151,160 @@ class ThreadPoolExecutor(_base.Executor):
 ### 进程
 
 什么是进程？一般回答是进程是操作系统分配资源的基本单位，相对应的，线程是cpu调度的最小单位，在不同的操作系统上，线程的实现也有所差异。
+
+#### multiprocessing.Process
+
+源码对应`cpython/Lib/multiprocessing/context.py`，可以看到Process的实现基本是继承BaseProcess，所以来分析BaseProcess如何创建进程的吧,下面的中文注释就是分析过程同样，做了省略
+
+```python
+class BaseProcess(object):
+    '''
+    Process objects represent activity that is run in a separate process
+
+    The class is analogous to `threading.Thread`
+    '''
+    # 这个需要子类去实现的，后面还会分析Process怎么实现的，这么看这种直接raise Error的做法好像在模拟java的抽象方法，只不过，这里只能在运行时才会抛出Error
+    def _Popen(self):
+        raise NotImplementedError
+
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs={},
+                 *, daemon=None):
+        assert group is None, 'group argument must be None for now'
+        count = next(_process_counter)
+        self._identity = _current_process._identity + (count,)
+        self._config = _current_process._config.copy()
+        self._parent_pid = os.getpid()
+        self._parent_name = _current_process.name
+        self._popen = None
+        self._closed = False
+        self._target = target #实际进程运行的内容，就是传入的函数
+        self._args = tuple(args) # 进程的参数，
+        self._kwargs = dict(kwargs)# 进程的参数
+        self._name = name or type(self).__name__ + '-' + \
+                     ':'.join(str(i) for i in self._identity)
+        if daemon is not None: #是否为设置守护进程
+            self.daemon = daemon
+        _dangling.add(self)
+
+    def run(self):
+        '''
+        Method to be run in sub-process; can be overridden in sub-class
+        '''
+		# 这里的run是不是很像java里面Runnable接口里面的run函数
+        if self._target:
+            self._target(*self._args, **self._kwargs)
+
+    def start(self):
+        '''
+        Start child process
+        '''
+        self._check_closed()
+        assert self._popen is None, 'cannot start a process twice'
+        assert self._parent_pid == os.getpid(), \
+               'can only start a process object created by current process'
+        assert not _current_process._config.get('daemon'), \
+               'daemonic processes are not allowed to have children'
+        _cleanup()
+		# 追溯这个_Popen，就会发现最终是调用popen_fork.py中的_launch函数，_launch先是创建了俩个匿名管道，因为匿名管道是半双工的，所以创建俩个，方便父子进程同时通信，然后调用os.fork创建子进程，然后在调用BaseProcess._bootstrap
+        self._popen = self._Popen(self)
+        self._sentinel = self._popen.sentinel
+        # Avoid a refcycle if the target function holds an indirect
+        # reference to the process object (see bpo-30775)
+        del self._target, self._args, self._kwargs
+        _children.add(self)
+
+    def terminate(self):
+        '''
+        Terminate process; sends SIGTERM signal or uses TerminateProcess()
+        '''
+        self._check_closed()
+        self._popen.terminate()
+
+    def join(self, timeout=None):
+        '''
+        Wait until child process terminates
+        '''
+        self._check_closed()
+        assert self._parent_pid == os.getpid(), 'can only join a child process'
+        assert self._popen is not None, 'can only join a started process'
+        res = self._popen.wait(timeout)
+        if res is not None:
+            _children.discard(self)
+
+    def _bootstrap(self, parent_sentinel=None):
+        from . import util, context
+        global _current_process, _parent_process, _process_counter, _children
+
+        try:
+            if self._start_method is not None:
+                context._force_start_method(self._start_method)
+            _process_counter = itertools.count(1)
+            _children = set()
+            util._close_stdin()
+            old_process = _current_process
+            _current_process = self
+            _parent_process = _ParentProcess(
+                self._parent_name, self._parent_pid, parent_sentinel)
+            if threading._HAVE_THREAD_NATIVE_ID:
+                threading.main_thread()._set_native_id()
+            try:
+                util._finalizer_registry.clear() #清空_finalizer_registry
+                util._run_after_forkers()#执行fork之后的任务，用于可以定义弱引用对象去实现这个阶段的hook
+            finally:
+                # delay finalization of the old process object until after
+                # _run_after_forkers() is executed
+                del old_process
+            util.info('child process calling self.run()')
+            try:
+                self.run() #执行进程内容
+                exitcode = 0
+            finally:
+                util._exit_function() #执行完毕，清理子进程，以及执行_run_finalizers(),这个函数默认为空，需要用户自己定义multiprocessing.util.Finalize，做进程退出时的hook函数
+        except SystemExit as e:
+            if e.code is None:
+                exitcode = 0
+            elif isinstance(e.code, int):
+                exitcode = e.code
+            else:
+                sys.stderr.write(str(e.code) + '\n')
+                exitcode = 1
+        except:
+            exitcode = 1
+            import traceback
+            sys.stderr.write('Process %s:\n' % self.name)
+            traceback.print_exc()
+        finally:
+            threading._shutdown()
+            util.info('process exiting with exitcode %d' % exitcode)
+            util._flush_std_streams()
+
+        return exitcode
+```
+
+#### 进程间通信
+
+线程共享堆上的数据，本身就可以通信。
+
+回顾一下进程间通信的方法：共享内存、管道、信号量、套接字、文件、消息队列、信号等，下面就看看python这块的具体实现吧
+
+1. 首先，在分析进程创建的时候，就使用了匿名管道，这个时os模块实现的
+2. multiprocessing.Pipe，管道，在linux，使用域间套接字实现的
+3. multiprocessing.Queue,队列，实际上基于上面的Pipe实现的
+4. sharedMemory，共享内存，基于mmap实现的，将进程自己的虚拟内存映射到同一片物理内存
+5. shareableList，基于sharedMemory实现的
+
+有了这些，基本的进程间通信时没什么问题的
+
+这里没有说锁的实现，因为就是用的线程threading模块的锁
+
+#### 进程池mumltiproessing.Pool
+
+结合在说明线程池的时候，描述的模型，和去银行窗口办业务，这里不详细分析源码了，直接解释关键的实现
+
+- `_taskqueue`存放任务的队列，对这个队列取任务时，会使用锁锁定
+- `_pool` worker进程队列
+- `_inqueue` 实际执行任务时，各个进程都是从这个队列取任务
+- `_outqueue` 发送结果的队列
+- `_work_handler`线程，保证进程池在worker进程有退出的时候创建新的进程，添加到pool
+- `_task_handler`线程，从任务队列中，取出任务，放入`_inqueue`
+- `_handle_results`线程，将处理完的任务的结果，从`_outqueue`取出
