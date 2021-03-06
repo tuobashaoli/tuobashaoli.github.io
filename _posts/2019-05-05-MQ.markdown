@@ -1,9 +1,11 @@
 ---
 categories: blog
 date: '2019-05-05 09:08:18'
-title: "Message Queue"
-published: False
+title: "消息队列"
+published: True
 layout: post
+description: 消息队列说明
+tags: 消息队列
 ---
 
 # 消息队列
@@ -153,12 +155,15 @@ layout: post
 
 9. 插件机制：提供了许多插件，来从多方面进行扩展，也可以编写自己的插件；
 
-部署方式
+10. 支持万级别的并发
 
-使用容器部署，推荐使用官方镜像
+### kafka
 
-```
-docker run -d -v /etc/localtime:/etc/localtime -p 4369:4369 -p 5671-5672:5671-5672 -p 15671:15671 -p 25672:25672 --name rabbitmq -e RABBITMQ_DEFAULT_PASS=password -e RABBITMQ_DEFAULT_USER=user -e RABBITMQ_DEFAULT_VHOST=my_vhost rabbitmq:3.7.24-management
-```
+这个算是当前海量并发下最常用的消息队列了，支持百万级别并发，使用scala语言编写，支持主流的java各种技术框架
 
+### RocketMQ
+
+### Redis
+
+实际上，redis作者都不建议redis做消息队列，(*^_^*)/(ㄒoㄒ)/~~，但是redis确实支持了，不过确实不建议用作高并发场景
 
