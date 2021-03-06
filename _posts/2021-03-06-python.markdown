@@ -1,0 +1,142 @@
+---
+categories: blog
+date: '2021-03-06 00:10:18'
+description: it is so pythonic
+layout: post
+published: True
+title: "python内存回收"
+tags: "pythonic"
+---
+
+## 一句话总结
+
+python中一切皆对象，python使用引用计数标记对象，当某个对象上的引用计数为0的时候，就将该对象回收，为了解决循环引用问题，python辅以可达分析，同时，根据统计学规律，大多数内存中的对象都是短生命周期的、处于新生代，python也使用了分代收集的方法回收内存。
+
+如果不想了解详细的内容的话，那么了解到此就可以了。
+
+## 引用计数
+
+python中一切皆对象，在python虚拟机的实现看来，一切都是PyObject，其结构体如下
+
+```
+typedef struct _object {
+    _PyObject_HEAD_EXTRA
+    Py_ssize_t ob_refcnt;
+    PyTypeObject *ob_type;
+} PyObject;
+```
+
+其中的`ob_refcnt`就是这个对象的引用计数，当这个值为0时，即没有任何其他对象引用该对象，那么就代表这个对象可以被回收。
+
+那么很容易就想到了循环引用的问题，当A引用了B，B也引用了，并且A、B都没有被其他对象引用，那么A、B的`ob_refcnt`都是1，没法被回收，但实际上，这俩个对象，没有被外部所引用，是应该被回收的
+
+## 可达性分析
+
+为了解决循环引用问题，python引入了可达性分析。
+
+### 容器对象
+
+想想，如果对象本身只是一个基础对象，比如一个int对象，那么这个对象是不存在对其他对象的引用，像这样的对象就不会有循环引用问题，那么就不用可达性分析，在python中，将存在对其他对象引用的对象，叫做容器对象。
+
+### 可收集对象链表
+
+python会把这些容器对象，用一个双向链表串起来，其实现如下，这个结构体包括的双向链表的俩头指针
+
+```C
+typedef struct {
+    // Pointer to next object in the list.
+    // 0 means the object is not tracked
+    uintptr_t _gc_next;
+
+    // Pointer to previous object in the list.
+    // Lowest two bits are used for flags documented later.
+    uintptr_t _gc_prev;
+} PyGC_Head;
+```
+
+这个`PyGC_Head`会被虚拟机自动加到容器对象的头前面，即一个容器对象的结构如下
+
+```
+PyGC_Head
+PyObject_HEAD
+object
+```
+
+### 可达性分析
+
+可达性分析需要从一个根对象出发，逐步标记可达的对象和不可达的对象，然后回收不可达的对象，那么怎么确定根对象？
+
+读过《Python源码剖析》的话，就知道，早期的`PyGC_Head`结构体中，就有一个`gc_refs`的值，这个值实际上被称为有效引用计数，是`ob_refcnt`在可收集对象链表中对该对象的引用的数，即从A出发，检索A对象包含的引用，发现A对象引用了B，那么就把B的`ob_refcnt`减去1，存入`gc_refs`，那么再从B出发，发现B引用了A，那么A的`gc_refs`就等于A的`ob_refcnt`减去1，这时，A和B的`gc_refs`都等于0，实际上摘除了循环引用。那么扫描一边可收集对象链表，找到那些`gc_refs`不为0的对象，实际上就是根对象。
+
+题外话：《Python源码剖析》这本比较早了，分析的python版本好像是2.4，我在网上听说，作者本来像一直更新的，后来去挽救公司，就没时间出续作，纸质书都不再出版了，只能搜电子版了，但是对于理解python原理还是有很大帮助的，建议结合当前的源码去阅读，实际上我就是这么做的，哈哈哈哈
+
+但是，当前的`PyGC_Head`没有`gc_refs`这个值了，那么是更换了找根对象的方法了吗？
+
+实际上并没有，看看`_gc_prev`的注释`Lowest two bits are used for flags documented later.`,这个值的后俩位是后面记录的标志。再看看源码
+
+```C
+//可达性分析函数
+visit_reachable(PyObject *op, PyGC_Head *reachable)
+{
+	...
+	// 这里还是使用了gc_refs
+	const Py_ssize_t gc_refs = gc_get_refs(gc);
+	...
+}
+
+gc_get_refs(PyGC_Head *g)
+{
+	//直接从_gc_prev取出后俩位
+    return (Py_ssize_t)(g->_gc_prev >> _PyGC_PREV_SHIFT);
+}
+```
+
+果然，`gc_refs`从没有消失，只是隐藏在`_gc_prev`之中而已。
+
+## 分代收集
+
+python中，默认是分三代，对应的是三个可收集对象链表,存放generations数组中
+
+```C
+struct gc_generation {
+    PyGC_Head head;
+    int threshold; /* collection threshold */
+    int count; /* count of allocations or collections of younger
+                  generations */
+};
+
+struct gc_generation generations[NUM_GENERATIONS];
+```
+
+python将从generations中，查找count值越界的最老的那一代，然后将着代之前的所有代，和当前代合并，实际就是合并链表，然后在这个合并后的链表上,回收内存
+
+## 弱引用
+
+如果读过python的源码的话，就会发现很多结构体中，都有存放弱引用对象的链表，比如
+
+```
+typedef struct {
+    PyObject_HEAD
+    COMMON_FIELDS(func_)
+    PyObject *func_doc;         /* The __doc__ attribute, can be anything */
+    PyObject *func_dict;        /* The __dict__ attribute, a dict or NULL */
+    PyObject *func_weakreflist; /* List of weak references */
+    PyObject *func_module;      /* The __module__ attribute, can be anything */
+    PyObject *func_annotations; /* Annotations, a dict or NULL */
+    vectorcallfunc vectorcall;
+
+    /* Invariant:
+     *     func_closure contains the bindings for func_code->co_freevars, so
+     *     PyTuple_Size(func_closure) == PyCode_GetNumFree(func_code)
+     *     (func_closure may be NULL if PyCode_GetNumFree(func_code) == 0).
+     */
+} PyFunctionObject;
+```
+
+这里为什么要提弱引用呢，因为弱引用是不会增加`ob_refcnt`的值的，所以，开发者可以使用弱引用来加快可达性分析。具体的使用，这里就暂且不提了。
+
+## 唠叨俩句
+
+相比较与java的内存回收，就会发现python的内存回收简单很多，总感觉python就是怎么实现简单怎么来，选择引用计数回收内存也是基于这个理念，但是实际的内存回收效率，就很难说了有多高效。
+
+┑(￣Д ￣)┍
