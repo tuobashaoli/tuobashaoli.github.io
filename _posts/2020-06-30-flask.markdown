@@ -5,49 +5,57 @@ description: do you know flask
 layout: post
 published: False
 title: "put it in flask"
+tags: pythonic,web
 ---
 
-## AppContext/RequestContext
+## 怎么说
 
-接收请求 -> 创建请求上下文 -> 请求上下文入栈 -> 创建该请求的应用上下文 -> 入栈 -> 处理逻辑 -> 请求上下文出栈 -> 应用上下文出栈
+flask是一个轻量级的web开发框架，使用python语言编写，十分简洁和方便，核心模块是jinja2和Werkzueg，jinja2是前端页面模板，Werkzueg是最WSGI的封装。
 
-请求上下文中比较重要对象是request和session
+## WGSI
 
-```python
-request.max_content_length # 获取该请求允许的数据包最大字节数
+一句话，WSGI是服务器和web应用的接口协议，这样，将整个web服务解耦，常用的服务器，比如uWSGI、gunicorn，常用的Web应用，Django、Flask。
+
+WSGI定义的接口，要求web应用提供一个可调用对象，这个对象有如下要求
+
+1. 接收俩个参数，environ字典，是服务器传过来的参数，start_reponse函数，这个函数要在可调用对象中执行并返回给服务器该http请求的响应
+2. 返回一个可迭代对象
+
+比如，一个简单的可调用对象
+
+```
+def application(environ,start_reponse):
+	start_response('200 ok',[('content-type','text/plain')])
+	return ['ok']
 ```
 
-应用上下文对象AppContext会在必要时被创建和销毁，它不会在线程间移动，并且也不会在不同的请求之间共享；因此它可以作为在一次请求中临时存放数据的地方，其主要管理本次请求的当前应用app对象和临时全局g对象
+## Werkzueg
 
-应用上下文可以主动创建
+推荐一个werkzueg文章，https://www.cnblogs.com/leijiangtao/p/4529405.html，
 
-```python
-#
-app_context = app.app_context()
-app_context.push()
-print(current_app)
-app_context.pop()
+## 一个flask web启动
 
-#
-with app.app_context():
-    print(current_app)
+```
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World!
+
+if __name__ == "__main__":
+	app.run()
 ```
 
-可以用来做数据库的上下文
+查看你run的源码，发现实际上就是调用werkzeug的run_simple
 
-```python3
-class DBAtomic(ContextDecorator):
-    def __init__(self,db):
-        self.db = db
-
-    def __enter__(self):
-        self.app_context = app.app_context()
-	self.app_context.push()
-
-    def __exit__(self,exc_type,exc_val,exc_tb):
-        if exc_type:
-	    self.db.session.rollback()
-	else:
-	    self.db.session.commit()
-	self.app_context.pop()
+```
+from werkzeug.serving import run_simple
+try:
+    run_simple(host, port, self, **options)
+finally:
+    # reset the first request information if the development server
+    # reset normally.  This makes it possible to restart the server
+    # without reloader and that stuff from an interactive shell.
+    self._got_first_request = False
 ```

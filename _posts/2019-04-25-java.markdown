@@ -4,6 +4,7 @@ date: '2019-04-25 16:44:18'
 layout: post
 published: True
 title: "Java now"
+tags: java
 ---
 
 ### 垃圾收集器和内存分配策略
