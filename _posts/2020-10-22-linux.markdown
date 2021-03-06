@@ -4,7 +4,7 @@ date: '2020-10-22 15:52:18'
 description: 一次linux内核参数调整
 layout: post
 published: True
-title: "linux"
+title: "jenkins节点任务阻塞"
 tags: linux
 ---
 
