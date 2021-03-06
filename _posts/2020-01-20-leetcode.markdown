@@ -4,7 +4,7 @@ layout: post
 date: "2020-01-20 14:48:18"
 categories: blog
 published: True
-tags: "code"
+tags: "leetcode"
 ---
 
 ### 无重复字符的最长子串的长度

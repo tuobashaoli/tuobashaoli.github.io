@@ -5,6 +5,7 @@ description: it is for LVM
 layout: post
 published: True
 title: 'LVM it!'
+tags: linux
 ...
 
 -   [概念](#概念)

@@ -5,6 +5,7 @@ description: it is for shell
 layout: post
 published: True
 title: 'Shell it!'
+tags: linux
 ...
 
 -   [shell命令总结](#shell命令总结)

@@ -5,6 +5,7 @@ description: how to know performance of linux machine
 layout: post
 published: True
 title: "linux performance command"
+tags: linux
 ---
 
 ### CPU
