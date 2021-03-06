@@ -163,7 +163,11 @@ class BaseProcess(object):
 
     The class is analogous to `threading.Thread`
     '''
-    # 这个需要子类去实现的，后面还会分析Process怎么实现的，这么看这种直接raise Error的做法好像在模拟java的抽象方法，只不过，这里只能在运行时才会抛出Error
+    # 这个需要子类去实现的，Process这里根据当前的操作系统，做了选择不同创建进程的方法，
+	# fork unix 使用os.fork，子进程完全克隆父进程的资源，unix默认
+	# spawn unix，windows，darwin，父进程启动一个新的Python解释器， 子进程将只继承运行run()方法所需的资源，是win32/darwin默认的模式，比较消耗资源
+	# forkserver unix，启动一个单线程的服务器进程，专门用于创建进程，这个服务器进程会帮助克隆资源，这种创建进程方式需要用户主动选择
+	# 这么看这种直接raise Error的做法好像在模拟java的抽象方法，只不过，这里只能在运行时才会抛出Error
     def _Popen(self):
         raise NotImplementedError
 
