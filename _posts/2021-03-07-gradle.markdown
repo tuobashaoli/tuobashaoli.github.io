@@ -1,0 +1,170 @@
+---
+categories: blog
+date: '2021-03-07 00:30:18'
+description: gradle
+layout: post
+published: True
+title: "Gradle基本介绍"
+tags: "gradle"
+---
+
+### 什么是构建
+
+从源码到可交付的产物，一般的过程如下
+
+源码 -> 编译 -> 构建 -> 出包
+
+源码可能是各个组件的源码，各自编译后，组装再编译，生成最终的产物，这期间，可能又各种依赖关系，也会有各种分支关系，在没有各种构建工具之前，可以写自动化脚本，比如shell或者python，去实现构建，但那样的话，自己的维护成本就十分高了
+
+### java构建工具
+
+#### ant
+
+ant是用java编写的开源构建工具，为java项目提供自动化任务，比如编译源代码、运行单元测试、打包jar、生成javadoc，但是ant本身不提供依赖管理，可以和依赖管理器Ivy集成。
+
+
+一个构建脚本由三个基本元素组成
+
+- 一个project
+	- 工程，可以包括多个target
+- 多个target
+	- 目标，可以包括多个task，目标与目标之间可以存在依赖
+- 可用的task
+	- 具体的可执行的代码，比如创建目录、执行编译命令
+
+ant的配置构建的是通过xml文件配置的，以下是举例说明,其实不用解释，仅仅通过英文就应该都知道下面这个ant在干什么了吧
+
+```xml
+<project name="my-app" default="dist" basedir=".">
+	<property name="src" location="src">
+	<target name="init">
+		<mkdir dir="${build}">
+	</target>
+
+	<target name="compile" depends="init" description="compile source">
+		<javac srcdir="${src}" destdir="${build}" classpath="lib/commons-lang3-3.1.jar" includeantruntime="false">
+	</target>
+
+	<target name="dist" depends="compile" description="generate dist">
+		<mkdir dir="${dist}">
+		<jar jarfile="${dist}//my-app-${version}.jar" basedir="${build}">
+	</target>
+
+	<target name="clean" description="clean up">
+		<delete dir="${build}">
+		<delete dir="${dist}">
+	</target>
+</project>
+```
+
+缺点：
+
+1. xml配置麻烦，会导致构建脚本臃肿
+2. xml对逻辑语句if-else-then之类的支持不好
+3. 无法知道构建中由多少个类被编译或者多少个task被执行
+4. 需要Ivy进行依赖管理
+
+#### maven
+
+“约定优先于配置”
+
+意味着maven会为项目配置和行为提供有意义的默认值
+
+标准目录结构如下
+
+![avatar](/assets/images/mavendir.png)
+
+maven基于构建生命周期的思想，每个项目都确切知道有哪些步骤去执行构建、打包和发布应用程序，包括如下功能
+
+- 编译源码
+- 运行单元测试和集成测试
+- 组件工件
+- 将工件部署到本地仓库
+- 将工件部署到远程仓库
+
+其实这从上往下的一整个过程，就可以是一个简单的CI流水线
+
+![avatar](/assets/images/mavenlifecycle.png)
+
+依赖管理
+
+maven会从构建脚本中提取依赖的外部库，会从远程的Maven Central中下载到本地的缓存中，然后就使用本地的缓存。
+
+maven的构建脚本是pom.xml,
+
+![avatar](/assets/images/mavenpom.png)
+
+缺点：
+1. 默认的结构和生命周期可能不是项目
+2. 为maven写插件过于累赘
+3. 早期版本会自动更新核心插件
+
+#### 总结
+
+通过分析ant和maven的特性，总结出，一个比较完善的构建工具应该具备如下特性
+
+- 具有表达性、声明式、可维护的构建语言
+- 标准化的项目布局和生命周期
+- 易用和灵活的定制逻辑
+- 支持多个项目组成的项目结构
+- 支持依赖管理
+- 可以很好的兼容ant和maven
+- 可扩展和高效
+
+### gradle
+
+#### 特性
+
+- 使用groovy语言做DSL
+- 具有表达性的语言和强大的API
+- 和其他构建工具的集成
+- 社区驱动和公司支持
+- 可扩展
+- 鲁棒和强大的依赖管理
+- 灵活的约定
+
+一个gradle构建脚本，大概如下，每个元素都有一个与java类一对一的映射
+
+```
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+}
+
+task myTask{
+	doFirst{
+	}
+	doLast {
+	}
+}
+```
+
+#### 使用gradle
+
+编写一个`build.gradle`文件，如下
+
+```
+// 这是一个task
+task hello {
+	// 这是一个action
+	doLast{
+		println 'hello'
+	}
+}
+```
+
+然后在命令行中执行`gradle -q hello`，就会输出hello，也可以`gradle -q h`，因为gradle支持task名称缩写
+
+使用`gradle -h`可以查看gradle支持的选项，这里只说一些常用的
+
+```
+--daemon 用gradle daemon执行构建
+--no-daemon 不用gradle daemon执行构建
+--parallel 并行编译项目
+-s，--stacktrace 打印所有异常的栈信息
+```
+
+
+
