@@ -1,0 +1,15 @@
+---
+categories: blog
+date: '2021-03-08 22:31:18'
+title: "devops"
+published: False
+layout: post
+description: devops
+tags: devops
+---
+
+## 自己的话
+
+什么是devops？其实，到现在，我也无法很详细完备地去解释这个概念，但是，传统的瀑布式开发，一定是大家都可以理解的，那么，瀑布式的反面，就是devops吗？
+
+其实我的也不是一个工作多年的devops工程师，但是毕竟自毕业以来就挂着devops的title，所以还是有些想法的。
