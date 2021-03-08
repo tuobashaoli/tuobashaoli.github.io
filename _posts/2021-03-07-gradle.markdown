@@ -166,5 +166,7 @@ task hello {
 -s，--stacktrace 打印所有异常的栈信息
 ```
 
+### 简单说
 
+相比我平常更常操作的jenkins pipeline，gradle可以简单的理解成本地版本的jenkinspipeline，二者都是用groovy编写的DSL。
 
