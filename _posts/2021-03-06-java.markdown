@@ -3,7 +3,7 @@ title: "JAVA内存回收"
 date: '2021-03-06 19:21:18' 
 layout: post 
 categories: blog
-published: False
+published: True
 tags: java
 ---
 
@@ -113,8 +113,67 @@ GC时，可以通知各个线程，等线程运行到安全点的时候，告知
 
 ### 垃圾收集器
 
-java又很多垃圾收集器，
+java有很多垃圾收集器，其实是随着各种机制被设计出来，收集器不断地演进
+
+下图是书里给出的各个收集器的关系
+
+![avatar](/assets/images/javacollect.png)
+
+#### Serial
+
+单线程收集器，收集垃圾时就是会stop the world，（没错，就像空条承太郎的替身白金之星的技能，the world!!!），就像打扫屋子的时候的让人出来
+
+#### ParNew
+
+就是多线程版本的Serial
+
+#### Parallel Scavenge
+
+以达到一个可控制的吞吐量为目标，提供了-XX:MaxGCPauseMillis和-XX:GCTimeRatio俩个参数
+
+#### Serial Old
+
+Serial的老年代，单线程，使用标记整理
+
+#### Parallel Old
+
+Parallel Scavenge收集器的老年代版本，使用多线程和标记整理
 
 #### CMS
 
+Concurrent Matk Sweep，以最短回收停顿时间为目标的收集器，标记清除，主要步骤如下
+
+- 初始标记
+	- 需要stop the world，仅标记GC Root能直接关联的对象，这样速度就很快，
+- 并发标记
+	- 从GC Root出发，不断标记对象，和用户线程一起
+- 重新标记
+	- 在并发标记阶段，引用关系可能会发生改变，关注引用的新增，在三色模型中，当有白色的对象被改为黑色对象的引用，就把这个黑色对象，改成灰色对象，然后在这个阶段，重新标记
+- 并发清除
+	- 回收对象
+
+缺点
+
+- CMS收集器对CPU资源十分敏感
+- 无法处理浮动垃圾
+- 标记清除产生大量内存碎片
+
 #### G1
+
+特性
+
+- 可以并行与并发
+- 分代收集
+- 标记整理
+- 可预测停顿
+
+其操作大概如下
+
+- 将堆内存划分大小相等的独立区域Region，
+- 跟踪各个Region的垃圾堆积的价值大小,即回收所获得的空间大小以及回收所需的时间的经验值，优先回收价值最大的Region
+- 每个Region都有一个RememberSet的数据结构，保存着其他Region中的对象引用本Region中对象的关系
+- 步骤
+	- 初始标记
+	- 并发标记
+	- 最终回收
+	- 筛选回收
