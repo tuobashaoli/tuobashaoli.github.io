@@ -1,0 +1,49 @@
+---
+categories: blog
+date: '2021-03-08 22:37:18'
+description: gradle
+layout: post
+published: False
+title: "gradle脚本"
+tags: "gradle"
+---
+
+## 构建块
+
+每个Gradle构建都包含三个基本构建块，至少一个project，一个project又包含多个task，
+
+- project
+	- project会被实例化org.gradle.api.Project类，并且有一个project的变量，可以使用，(这个很像jenkins pipeline中的env变量)
+	- `println "description project $name" + project.description`
+- task
+	- 任务动作 task action
+	- 任务依赖 task dependency
+- property
+	- 每个project和task都可以通过getter和setter访问属性
+	- 扩展属性，使用ext{}定义
+	- Gradle属性，在gradle.properties中定义
+	- -P指定项目属性
+	- -D执行系统属性
+
+## task
+
+默认，每个新创建的task都是org.gradle.api.DefaultTask类型的。
+
+Task接口提供了俩个相关的方法来声明task动作，doFirst(闭包),doLast(闭包)
+
+```
+version = '0.1-SNAPSHOT'
+
+task printVersion{
+	doLast{
+		println "Version $version"
+	}
+}
+
+#为printVersion添加一个前缀action
+printVersion.doFirst {println "first action"}
+#为printVersion添加一个后缀action
+printVersion << {println "last action"}
+```
+
+
