@@ -20,10 +20,10 @@ tags: "gradle"
 	- 任务依赖 task dependency
 - property
 	- 每个project和task都可以通过getter和setter访问属性
-	- 扩展属性，使用ext{}定义
+	- 扩展属性，使用ext{}定义，其他project可以通过project.ext访问
 	- Gradle属性，在gradle.properties中定义
-	- -P指定项目属性
-	- -D执行系统属性
+	- 命令行中-P指定项目属性，相当于在project中直接定义
+	- 命令行中-D执行系统属性，被传送给启动Gradle的jvm，作为一个系统属性被jvm使用
 
 ## task
 
