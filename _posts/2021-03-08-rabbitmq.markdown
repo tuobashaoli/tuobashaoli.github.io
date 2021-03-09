@@ -5,7 +5,7 @@ title: "rabbitmq集群"
 published: True
 layout: post
 description: rabbitmq
-tags: 消息队列，rabbitmq
+tags: 消息队列 rabbitmq
 ---
 
 ## 简单说
