@@ -3,7 +3,7 @@ categories: blog
 date: '2021-03-08 22:37:18'
 description: gradle
 layout: post
-published: False
+published: True
 title: "gradle脚本"
 tags: "gradle"
 ---
@@ -29,6 +29,8 @@ tags: "gradle"
 
 默认，每个新创建的task都是org.gradle.api.DefaultTask类型的。
 
+
+### 基本使用
 Task接口提供了俩个相关的方法来声明task动作，doFirst(闭包),doLast(闭包)
 
 ```
@@ -45,5 +47,216 @@ printVersion.doFirst {println "first action"}
 #为printVersion添加一个后缀action
 printVersion << {println "last action"}
 ```
+
+### dependsOn
+
+定义task依赖关系
+
+```
+task a << {println "a"}
+task b << {println "b"}
+
+// 实际上写在参数位或者函数体内，都一样，都是局部变量
+task c(dependsOn:[a,b]){
+	println "c"
+}
+```
+
+### type
+
+type指定的类，实际上像是给task继承某个类,就是面向对象的继承特性，这样不用重复写相似的task，以下是一个自定的task
+
+```
+class ReleaseVersionTask extends DefaultTask {
+	@Input Boolean release //通过org.gradle.api.tasks包下的注解来声明输入输出
+	@OutputFile File destFile
+	ReleaseVersionTask(){
+		group = 'versioning'
+		description = 'Makes Project a release version.'
+	}
+	@TaskAction //使用注解声明执行代码，
+	void start(){
+		project.version.release = true
+		ant.propertyfile(file: destFile){
+			entry(key: 'release', type: 'string',operation: '=',value:'true')
+		}
+	}
+}
+```
+
+```
+task a(type: ReleaseVersionTask){
+	release = true
+	destFile = versionFile
+}
+```
+
+当然，gradle也有内置的type，比如Zip
+
+```
+task createDistribution(type: Zip, dependsOn: makeReleaseVersion){
+	from war.outputs.files //依赖推断
+
+	from(sourceSets*.allSource){
+		into 'src'
+	}
+
+	from(rootDir){
+		include versionFile.name
+	}
+}
+```
+
+或者Delete
+
+```
+task clean(type: Delete){
+	delete rootProject.buildDir
+	delete new File(rootDir,DEFAULT_BUILD_DIR_NAME)
+}
+```
+
+### Gradle生命周期
+
+- 初始化，从settings.gradle创建项目数，确定project对象
+- 配置，对project对象进行配置，确定依赖和顺序
+- 执行，执行project内的task
+
+
+### hook
+
+gradle提供了很多api，用于在各个生命周期各个节点提供hook操作
+
+settings.gradle
+
+```
+include ':app'
+rootProject.name = 'TestAndroid'
+
+// 在初始化前就已经调用了 buildStarted 方法,所以在初始化阶段无法回调的到.
+gradle.buildStarted {
+    println 'buildStarted......'
+}
+// 1.初始化阶段
+gradle.settingsEvaluated {
+    println '初始化阶段 settingsEvaluated'
+}
+gradle.projectsLoaded  {
+    println '初始化阶段 projectsLoaded'
+}
+// 2.配置阶段
+gradle.beforeProject {
+    println '配置阶段 beforeProject --- in settings.gradle'
+}
+```
+
+build.gradle
+
+```
+// 1.自定义任务
+task t1 {
+    println 't1 configuration'
+    doLast {
+        println 't1 execute doLast'
+    }
+    doFirst {
+        println 't1 execute doFirst'
+    }
+}
+// 2.配置阶段
+gradle.beforeProject {
+    println '配置阶段 beforeProject'
+}
+project.beforeEvaluate {
+    println '配置阶段 beforeEvaluate'
+}
+gradle.afterProject {
+    println '配置阶段 afterProject'
+}
+project.afterEvaluate {
+    println '配置阶段 afterEvaluate'
+}
+
+// 所有项目的build.gradle执行完毕
+gradle.projectsEvaluated {
+    println '配置阶段 projectsEvaluated'
+}
+
+// task依赖关系图建立完毕
+gradle.taskGraph.whenReady {
+    println '配置阶段 whenReady'
+}
+// 3.执行阶段
+gradle.taskGraph.beforeTask {
+    println "执行阶段 beforeTask"
+}
+gradle.taskGraph.afterTask {
+    println "执行阶段 afterTask "
+}
+// 4.build结束
+gradle.buildFinished {
+    println '构建结束 buildFinished'
+}
+```
+
+## dependencies && repositories
+
+```
+//从上到下依次连接maven仓库，如果失败，就找下一个
+repositories {
+	maven {
+		url prop_MavenUrl
+		credentials{
+			username user
+			password passwd
+		}
+	}
+	maven{
+		url "gradle/repo"
+	}
+}
+
+dependencies {
+	classpath "com.android.tools.build:gradle:${prop_gradleVersion}"
+}
+```
+
+## buildScript
+
+buildScript代码块中，一般是配置gardle脚本自身使用的资源，相当于执行python脚本需要import一些仓库，一般buildScript中都是配置dependencies和repositories，然后就可以在gradle脚本中importr相关仓库，执行命令
+
+```
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'org.apache.commons:commons-csv:1.0'
+    }
+}
+
+import org.apache.commons.csv.*
+
+task printCSV() {
+    doLast {
+        def records = CSVFormat.EXCEL.parse(new FileReader('config/sample.csv'))
+        for (item in records) {
+            print item.get(0) + ' '
+            println item.get(1)
+        }
+
+    }
+}
+```
+
+
+
+
+
+
+
+
 
 
