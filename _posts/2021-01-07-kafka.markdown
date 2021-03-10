@@ -1,0 +1,38 @@
+---
+categories: blog
+date: '2021-01-07  19:57:18'
+description: kafka
+layout: post
+published: True
+title: "kafka"
+---
+
+# 基本概念
+
+主题topic，消息以主题为单位进行归类，生产者将消息发送到特定的主题，消费者订阅主题进行消费。
+
+主题包括一些分区，消息是被添加到分区里面，分配一个偏移量offset。分区拥有副本replica功能，有一个主分区leader，和0到多个副分区follower分区，生产者和消费者只和leader分区交互，所有副本统称为AR，所有与leader分区保持一定程度同步的分区集合叫ISR，与leader分区同步滞后过多的副本叫OSR，leader分区负责维护这俩个集合。
+
+HW是当前的分区的消费者只能获取的消息的位置offset，LEO指向下一条待写入的offset，ISR集合中的HW，就是这些分区的LEO中的最小值。
+
+消费者组，kafka保证，一个发布在topic上的消息，被分发给次消费者组中的一个消费者，这样，如果消费者都在这一个消费者组中，那么就是队列模式分发消息，如果每个消费者都在不同的消费者组，那么就是发布订阅式的分发消息。
+
+# 安装
+
+## zookeeper
+
+zookeeper是一个分布式协调服务，有三个角色，leader、follower和observer，同一时刻只有一个leader。
+
+使用docker部署zookeeper，如果要用多个docker模拟，需要在配置文件里面进行修改
+
+```
+docker run -d --name zoo -p 2181:2181 zookeeper
+```
+
+## kafka
+
+这里使用非官方的docker镜像进行部署，
+
+```
+docker run -d --name kafka -p 9092:9092  -e KAFKA_ADVERTISED_HOST_NAME="127.0.0.1" -e KAFKA_MESSAGE_MAX_BYTES=2000000 -e KAFKA_CREATE_TOPICS="Topic1:1:3,Topic2:1:1:compact" -e KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 wurstmeister/kafka
+```
