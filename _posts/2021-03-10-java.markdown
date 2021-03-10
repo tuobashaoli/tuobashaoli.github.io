@@ -1,0 +1,75 @@
+---
+title: "JAVA lambda"
+date: '2021-03-10 16:54:18'
+layout: post
+categories: blog
+published: True
+tags: java
+---
+
+## 楔子
+
+之前在一次面试的时候，面试官问的是python的闭包和lambda表达式的区别，当时我有点儿懵，因为平常没怎么注意，也可能是因为自己用的比较少，但是这个问题，隐含的问题其实比较重要，那就是作用域问题。
+
+python是支持函数式编程的，即函数也是一等公民，是一个对象，所以可以在函数中定义函数，函数当做另一个函数的参数，这里面就包括了局部作用域嵌套的问题，由于python支持闭包，里层的函数可以访问将外层函数的局部作用域中的变量，这些变量叫自由变量.
+
+这些自由变量的符号，实际会被存储在内层函数的`__code__.co_freevars`中，对应符号的值，存储在`__code__.__closure__[index].cell_contents`中，index对应`co_freevars`中的索引位置。
+
+既然python本身就支持闭包，那么久没必要支持lambda了，事实上，我平常也很少用lambda，感觉python是为了lambda而支持lambda，因为有些语言，都是专门用lambda去做到支持闭包属性的，为了支持闭包，用了lambda。
+
+回到刚才的问题，python中，闭包可以拥有自由变量，而lambda不能有自由变量，只能有自己定义的局部变量。
+
+## 语法
+
+一个lambda表达式不断优化的过程
+
+```java
+// 一个代码块，写法上，大家都差不多
+(String first,String second)
+	-> first.lenghth() - second.length()
+
+//可以有返回值
+(String first,String second) ->
+	{
+		return first.lenghth() - second.length();
+	}
+
+// 如果可以推导出类型，那么可以忽略类型
+Comparator<String> comp = (first,second) -> first.lenghth() - second.length()
+```
+
+## java的闭包
+
+当lambda引用了外围方法或者类中的变量，这个lambda就是一个闭包
+
+```java
+public static void repeatMessage(String text,int delay){
+	ActionListener listener = event ->
+	{
+		System.out.println(text); //这里引用了repeatMessage作用域中的局部变量text，这里就是lambda的自由变量
+		Toolkit.getDefaultToolkit().beep();
+	};
+	new Timer(delay,listener).start();
+}
+```
+
+但是，java的闭包，这些自由变量，一定是明确定义的、不可更改的，不能在lambda中修改自由变量的值，也不能再外部改变，因为这会在并发执行时不安全。当然，想要在lambda中操作可变变量，请使用传参的形式！
+
+## lambda的作用域
+
+在java中，lambda的作用域是和外部块一致的作用域，所以，lambda的参数，不能和外部块中的局部变量相同，但是python就设置了一层闭包的作用域，专门解决这个问题，在python中，闭包中局部变量会覆盖闭包作用域中的同名变量。
+
+## 函数式接口
+
+java中函数不是一个对象，也不能当做参数传递给另一个函数，但是，有了lambda，结合函数式接口，就可以做到类似的效果
+
+```java
+public static void repeat(int n,Runnable action){
+	for (int i=0;i< n:i++)action.run();
+}
+
+// 调用时，会将这个lambda表达式自动转成Runnable，类似自动转型
+repeat(10,() -> System.out.println("Hello World"))
+```
+
+除了Runnable，还有其他的函数式接口可以使用。
