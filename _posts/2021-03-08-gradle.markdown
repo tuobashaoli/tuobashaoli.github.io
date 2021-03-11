@@ -44,7 +44,7 @@ task printVersion{
 
 #为printVersion添加一个前缀action
 printVersion.doFirst {println "first action"}
-#为printVersion添加一个后缀action
+#为printVersion添加一个后缀action，没错，符号<<是doLast的简写
 printVersion << {println "last action"}
 ```
 
@@ -251,7 +251,79 @@ task printCSV() {
 }
 ```
 
+## apply
 
+实际上是类似python的import了，都是用于导入其他包
+
+```
+//导入本地../gradle/disableueslesstask.gradle这个gradle脚本里面的东西
+apply from '../gradle/disableueslesstask.gradle'
+
+//导入第三方插件，这个就会从buildScript中定义的repository中去查找了
+apply plugin: 'com.android.library'
+```
+
+## android
+
+现在，我对gradle的使用，主要就是用来构建android的项目，当引用'com.android.library'的时候，就可以使用android块了
+
+```
+android {
+	compileSdkVersion prop_compileSdkVersion //定义编译版本，prop_compileSdkVersion一般都是在构建命令时使用-P指定
+	buildToolsVersion prop_buildToolsVersion
+	resourcePrefix project.name + "_" // 限定xml资源的前缀，避免不同项目之间资源文件冲突
+
+	defaultConfig { //默认配置
+		minSdkVersion prop_minSdkVersion
+		targetSdkVersion prop_targetSdkVersion
+		versionCode 1
+		versionName "1.0"
+
+		testInstrumentationRunner "androidx.test.runner.AndroidJunitRunner" //运行junit测试，AndroidJunitRunner支持junit3和junit4
+		consumerProguardFiles "consumer-rules.pro" //支持aar中独立配置混淆文件的方法，以便于他人引用aar的时候不需要再进行混淆
+	}
+
+	buildTypes { //默认会有debug和release，对应的task就是assembleDebug和assembleRelease，这里就重写了这俩个块，当然也可以自行定义其他的块
+		debug {
+			matchingFallbacks = ['release','debug'] // 定在子模块中没找到对应的构建类型时要加载哪个类型,当执行gradle assembleDebug 构建 debug 版本时，而恰巧某个子模块又没有定义 debug 版本，则会一一按照你指定的 matchingFallbacks 从前往后依次寻找，直到类型匹配。
+			minifyEnabled false // 是否开启混淆，debug模式下不能开启，所以选择false
+			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),'proguard-rules.pro' // 配置混淆文件
+		}
+		release{
+			matchingFallbacks = ['release','debug']
+			minifyEnabled false
+			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),'proguard-rules.pro'
+		}
+	}
+
+	compileOptions { // 编译选项参数
+		encoding 'UTF-8'
+		sourceCompatibility JavaVersion.VERSION_1_8 // 指定编译编译.java文件的jdk版本
+		targetCompatibility JavaVersion.VERSION_1_8 // 确保class文件与targetCompatibility指定版本，或者更新的java虚拟机兼容
+	}
+
+	kotlinOptions {
+		jvmTarget = "1.8"
+	}
+}
+```
+
+## 多项目
+
+实际上，一般都是多项目一起构建的，这个时候，查看setting.gradle文件就知道一共有多少个项目了，
+
+如下
+
+```
+include ':model'
+include ':main'
+include ':app'
+rootProject.name = "RUOK"
+```
+
+android项目使用的是分层布局，使用包括其他项目的关键字是include，如果是平面布局，包括与根项目同一嵌套层次的项目，需要使用includeFlat方法，要使用includeFlat，平面布局
+
+gradle多项目 说明：https://blog.csdn.net/weixin_38062353/article/details/82719968
 
 
 
