@@ -1,0 +1,224 @@
+---
+title: "JAVA NIO基础"
+date: '2021-03-17 10:0:18'
+layout: post
+categories: blog
+published: True
+tags: java
+---
+
+## 简单说
+
+从1.4开始，java引入了NIO，也就是非阻塞IO，而在此之前，Java是使用阻塞的IO
+
+NIO的核心组件是
+
+- Channel
+- Buffer
+- Selector
+
+对比一下旧的IO
+1. 旧的io是面向流的，新的io面向缓冲区的
+2. 旧的io操作是阻塞的，新的io操作是非阻塞的
+3. 旧的io没有选择器，新的io需要选择器，而选择器是底层提供的支持
+
+### Channel通道
+
+同一个网络连接使用一个通道(Channel)表示，所有的NIO都是从通道开始的
+
+### Selector选择器
+
+这里就要提到IO多路复用了，这个一般是操作系统底层提供的机制，一个进程线程可以同时监听多个文件描述符，一旦其中一个可读可写，系统内核就通知进程线程，等于是和操作系统约定的一种异步通信方式，操作系统具体在实现上，有以下几种
+
+- select linux和win都支持，轮询所有的文件描述符，发现哪些就绪（可读可写），就通知进程线程
+- poll 和select的差异就是，select受单进程连接文件描述符限制，可以通过ulimit修改，但是poll用一个链表存储被监听的文件描述符，其他无差异
+- epoll 和前俩个差异就是，通过注册回调而不是主动轮询去找去就绪的文件描述符，等于是向更加底层的文件描述符交互使用了异步通信的方式
+- kqueue 与epoll相似，FreeBSD系统上开发的一个高性能的事件通知接口，非linux独占
+
+### 缓冲区
+
+就是应用程序和通道读写的缓冲区
+
+
+## NIO Buffer
+
+### 重要属性
+
+- capacity
+	- 表示缓冲区的容量大小，初始化后，不可再更改
+- position
+	- 表示当前位置，但是，缓冲区有读写俩种模式，每次当缓冲区切换模式的时候，position随着调整
+- limit
+	- 读写的最大上限，对于这种生产者消费者模式，写模式下的position，就是读模式下的limit，毕竟，先写入，才能再被读取嘛
+
+### 重要方法
+
+- allocate()
+	- 创建缓冲区，
+- put()
+	- 写入缓冲区
+- flip()
+	- 从写模式变成读模式，
+	- 从读模式切换回写模式可以使用clear/compact
+- get()
+	- 从缓冲区读取
+- rewind()
+	- 倒带，将position置为0，将mark标记置为-1，然后缓冲区就可以重头读取了
+- mark() reset()
+	- 将position临时存起来，放入mark中，
+	- reset将mark恢复到position中
+
+```java
+intBuffer = IntBuffer.allocate(20);
+Logger.info("position=" + intBuffer.position());
+Logger.info("limit=" + intBuffer.limit());
+Logger.info("capacity=" + intBuffer.capacity());
+
+for ( int i=0;i<5;i++){
+	intBuffer.put(i);
+}
+
+intBuffer.flip();
+
+for (int i=0;i<5;i++){
+	int j=intBuffer.get();
+}
+
+intBuffer.rewind();
+
+intBuffer.clear();
+
+for ( int i=0;i<5;i++){
+	intBuffer.put(i);
+}
+```
+
+## NIO Channel
+
+可以简单的将通道理解为文件描述符，但是实际上NIO Channel还可以细化
+
+### 主要类型
+
+- FileChannel
+	- 阻塞模式，可对文件读写
+
+```java
+RandomAccessFile afile = new RandomAccessFile("a.txt","rw");//这个更类似于python的open，不特指input或者output
+FileChannel inChannel = aFile.getChannel();
+ByteBuffer buf = ByteBuffer.allocate(CAPACITY);
+while( (length = inChannel.read(buf)) != -1 ){
+	...
+}
+
+buf.flip();
+
+int outlength = 0;
+
+while( (outlength = outchannel.write(buf)) != 0 ){
+	...
+}
+
+inChannel.close();
+```
+
+- SocketChannel
+	- 传输套接字，支持阻塞和非阻塞
+
+```java
+//这里就是很典型的socket编程了,发送端是创建->连接->发送->关闭，接收端是创建->绑定->监听->接受->读取->关闭
+
+SocketChannel socketChannel = SocketChannel.open();
+socketChannel.configureBlocking(false);
+socketChannel.connect(new InetSocketAddress("127.0.0.1",80));
+
+while (! socketChannel.finishConnect()){
+	// 自旋等待
+}
+
+ByteBuffer buf = ByteBuffer.allocate(1024);
+int bytesRead = socketChannel.read(buf);//返回的读取的字节数，如果是-1，那么对方的输出已经结束
+
+buf.flip();
+
+socketChannel.write(buf);
+
+socketChannel.shutdownOutput();
+IOUtil.closeQuietly(socketChannel);
+```
+
+- ServerSocketChannel
+	- 服务端套接字，支持阻塞和非阻塞
+- DatagramChannel
+	- 用于UDP协议，
+
+```java
+// 也是socket编程
+
+DatagramChannel channel = DatagramChannel.open();
+datagramChannel.configureBlocking(false);
+
+channel.socket().bind(new InetSocketAddress(18080));
+
+ByteBuffer buf = ByteBuffer.allocate(1024);
+SocketAddress clientAddr = datagramChannel.receive(buffer);
+
+buf.flip();
+
+channel.send(buf,new InetSocketAddress("127.0.0.1","12345"));
+
+buf.clear();
+
+channel.close();
+```
+
+## NIO Select
+
+### 选择器select和注册
+
+选择器和通道的关系是注册，通过调用通道的register方法，将通道注册到选择器上，
+
+```java
+Channel.register(Selector sel,int ops);
+// sel是选择器实例，
+// ops是监控的IO事件类型,具体如下
+// 可读：SelectionKey.OP_READ
+// 可写：SelectionKey.OP_WRITE
+// 连接: SelectionKey.OP_CONNECT
+// 接收: SelectionKey.OP_ACCEPT
+```
+
+这里的IO事件实际上是就绪状态，
+
+### 使用选择器
+
+1. 获取选择器实例
+2. 将通道注册到选择器中
+3. 轮询感兴趣的IO就绪事件
+
+```java
+
+Selector selector = Selector.open();
+
+ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+serverSocketChannel.configureBlocking(false);
+serverSocketChannel.bind(new InetSocketAddress(80));
+serverSocketChannel.register(selector,Selection.OP_ACCEPT);
+
+while (selector.select() >0){
+	Set selectedKeys = selector.selectedKeys();
+	Iterator keyIterator = selectedKeys.iterator();
+	while(keyIterator.hasNext()){
+		SelectionKey key = keyIterator.next();
+		if (key.isAcceptable()){
+			// 服务器监听到有新的连接
+		}else if(key.isConnectable()){
+			// 传输通道连接成功
+		}else if(key.isReadable()){
+			// 传输通道可读
+		}else if(key.isWritable()){
+			// 传输通道可写
+		}
+		keyIterator.remove();
+	}
+}
+```
