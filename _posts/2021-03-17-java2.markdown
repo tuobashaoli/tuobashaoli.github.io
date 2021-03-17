@@ -1,0 +1,61 @@
+---
+title: "Reactor反应器模式"
+date: '2021-03-17 17:57:18'
+layout: post
+categories: blog
+published: False
+tags: java 设计模式
+---
+
+## 简单说
+
+在最开始的时候，都是单线程处理网络连接，如下
+
+```java
+while(true){
+	socket = accept(); // 阻塞，只能一个一个处理连接
+	handle(socket); // 处理数据
+}
+```
+
+那么久无法做到并发处理socket，为了可以并发处理socket，很自然的就想到了用多线程处理，就是来一个连接，新建一个线程处理这个连接，
+
+```java
+while (!Thread.interrupted()){
+	Socket socket = serverSocket.accept();
+	Handler handler = new Handler(socket);
+	new Thread(handler).start();
+}
+```
+
+但是，这就带来了，多线程消耗资源过多的问题，维护这么多线程是十分消耗资源的。
+
+于是，就有了reactor反应器模式模式
+
+## 单线程Reactor反应器模式
+
+包括Reactor反应器和Handler处理器俩个组件，
+
+- Reactor反应器
+	- 查询IO事件，将事件发送给handler处理器
+- Handler处理器
+	- 与IO事件绑定，处理IO事件
+
+在java nio中SelectionKey提供了俩个重要方法，
+
+- void attach(Object o)
+	- 将任何Java POJO对象，作为附件添加到SelectionKey的实例，实际上就是将Handler处理器添加到SelectionKey实例中
+- Object attachment()
+	- 取出之前添加到SelectionKey实例的附件，就是Handler处理器
+
+## 回写服务器
+
+这个算是socket编程经典案例了
+
+由于单线程中，存在handler阻塞的问题，实际情况中不会使用单线程模式
+
+## 多线程Reactor反应器模式
+
+- 将IOHandler执行放入线程池中，避免handler相互阻塞
+- 将反应器查分为多个自反应器子线程，每个子线程负责一个选择器
+
