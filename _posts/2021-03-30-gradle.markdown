@@ -1,0 +1,41 @@
+---
+categories: blog
+date: '2021-03-30 10:19:18'
+description: gradle
+layout: post
+published: True
+title: "一次gradle异常"
+tags: "gradle"
+---
+
+## 问题
+
+在编译android应用的使用，配置manifest.xml的属性时，使用如下写法
+
+```xml
+android:value="${versionCommit}"
+```
+
+那么在编译时，使用·-PversionCommit=2970e93·就可以设置这属性值，但是，在构建出的apk中，这个属性竟然是个数字2139095040.000000，
+
+## 分析
+
+直接看上去，像是把2970e93当成科学计数法了，直接从字符串转成了数字，但是直接转换，发现是不相等的，
+
+## 解决
+
+既然发现是自动将值转类型，那么久可以尝试禁止转义，可以使用转义符防止转义
+
+`-PversionCommit=\\2970e93`
+
+测试后发现可以解决问题
+
+
+
+
+
+
+
+
+
+
