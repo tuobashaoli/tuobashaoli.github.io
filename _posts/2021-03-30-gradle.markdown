@@ -30,6 +30,23 @@ android:value="${versionCommit}"
 
 测试后发现可以解决问题
 
+## 新的问题
+
+在某些构建脚本下，会出现versionCommit值不合法的问题，实际构建中，会在生成的文件中使用到这个变量
+
+```
+文件: app/build/generated/source/buildConfig/.../debug/BuildConfig.java
+代码: public static final String versionCommit ="\2970e93"
+报错: illegal escape character
+```
+
+BuildConfig.java这个文件实际上gradle自动生成的，可以用于区分构建的环境(版本)，比如测试版本、正式版本、特殊版本等，
+
+关于BuildConfig的使用，可以参考 [这个](https://blog.csdn.net/gpf1320253667/article/details/84827292)
+
+
+
+
 
 
 
