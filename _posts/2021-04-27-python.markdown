@@ -1,0 +1,32 @@
+---
+categories: blog
+date: '2021-04-27 19:22:18'
+description: it is so pythonic
+layout: post
+published: False
+title: "python的内存分配"
+tags: "pythonic"
+---
+
+### 唠叨话
+
+最近在知乎上看到一个关于内存分配的文章，贴上来
+
+[从操作系统内存管理来说，malloc申请一块内存的背后原理是什么？ - 码农的荒岛求生的回答 - 知乎](
+https://www.zhihu.com/question/33979489/answer/1849544189)
+
+这里面就很清新、深刻的讨论了内存分配的面临的问题和解决的方法，一步一步，对于有着完善的内存分配的语言，比如java、python等，都是会面临这些问题，只不过各种语言选择了自己的解决方法，有些会趋同、有些也会有差异。
+
+### 内存管理结构
+
+python是用C写的，自然最底层是使用C的内存管理接口，malloc和free等，这是最底层，称之为第0层；
+
+为了兼容不同的操作系统下，C的内存分配接口的不同表现，比如有操作系统malloc(0)会返回NULL，有的会直接失败，python在第0层上做了一层简单的封装，这些接口大都是PyMem_API，即都是PyMem开头的，一些内存分配函数如下，称之为第1层
+
+```C
+# define PyMem_MALLOC(n) malloc((n)?(n):1)
+# define PyMem_REALLOC(p,n) realloc((p),(n)?(n):1)
+# define PyMem_FREE free
+```
+
+那么如果要分配具体的python的int、str对象，仅仅靠上面这层是不够的，
