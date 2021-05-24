@@ -29,4 +29,67 @@ python是用C写的，自然最底层是使用C的内存管理接口，malloc和
 # define PyMem_FREE free
 ```
 
-那么如果要分配具体的python的int、str对象，仅仅靠上面这层是不够的，
+那么如果要分配具体的python的int、str对象，仅仅靠上面这层是不够的，所以python再做了一层封装，这些都是以PyObj_为前缀，主要提供了Python对象的接口，这一层为第2层
+
+对于一些常用的对象，比如整数对象和字符串对象等，往往这些对象需要大量的进行创建，为了对这些做优化，往往是对象缓冲池机制，这一层称之为第3层
+
+### 小块空间的内存池
+
+#### block
+
+在python中，block都是以8字节的倍数，也有大小的上限，在python2.5中，这个上限是256字节，当申请的内存大于这个上限的时候，python就直接调用第1层的接口去申请内存，相当于直接调用malloc了。
+
+block可以是以下大小
+
+8、16、32、64、128、256
+
+#### pool
+
+实际上，block只是一个概念，没有实际的数据结构去表示block，使用中都是使用pool作为最小单位去分配内存
+
+python中将4KB内存定义为一个pool的大小，并且有结构体pool_header实现了这个pool
+
+```C
+struct pool_header {
+	union {
+		block *_padding;
+		uint count;
+	}ref;
+	block *freelock; /*一个pool中可能有部分block已经被分配了，这个freeblock指的是下一个可用block的起始地址*/
+	struct pool_header *nextpool;
+	struct pool_header *prevpool;
+	uint arenaindex;
+	uint szidx; /* 单个block的大小，一个pool只会包含一种大小的block，比如全部是8字节大小的block*/
+	uint nextoffset;
+	uint maxnextoffset;
+}
+```
+
+想想这样一个场景，一个pool中，一开始按顺序分配block，但是后来，前面的block被释放了，就会产生碎片block，为了提高利用率，这些block尽量要被利用起来，所以，在释放block的时候，会移动这个freeblock指针，将空闲的block连接起来
+
+#### arena
+
+多个pool集合在一起，就是一个arena，默认的arena的大小是256KB，也就是一个arena有64个pool，结构体如下
+
+```C
+struct arena_object {
+	uptr address;
+	block* pool_address;
+	uint nfreepools;
+	uint ntotalpools;
+	struct pool_header* freepools;
+	struct arena_object* nextarena;
+	struct arena_object* prevarena;
+}
+```
+
+pool_header管理的内存和pool_header是连在一起的，但是arena_object和管理的pool，不是连接在一起的，就是说，当arena没有和pool建立联系的时候，arena就是未使用的状态，当建立了和pool的联系，arena就是可用的状态。
+
+对于pool，分成三种状态
+
+1. used pool 至少有一个block已经被使用
+2. full pool 全部的block被使用
+3. empty pool 所有的block都是空闲的
+
+python内部维护的**usedpools数组**是所有的used pool，当申请内存的时候，就先从usedpools中找一块内存去分配block
+

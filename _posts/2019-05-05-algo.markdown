@@ -1,7 +1,7 @@
 ---
 title: "一些算法"
 date: '2019-05-05 18:27:18'
-published: True
+published: False
 categorie: blog
 layout: post
 ---
