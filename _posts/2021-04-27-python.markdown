@@ -3,7 +3,7 @@ categories: blog
 date: '2021-04-27 19:22:18'
 description: it is so pythonic
 layout: post
-published: False
+published: True
 title: "python的内存分配"
 tags: "pythonic"
 ---
@@ -91,5 +91,52 @@ pool_header管理的内存和pool_header是连在一起的，但是arena_object�
 2. full pool 全部的block被使用
 3. empty pool 所有的block都是空闲的
 
-python内部维护的**usedpools数组**是所有的used pool，当申请内存的时候，就先从usedpools中找一块内存去分配block
+python内部维护的**usedpools数组**是所有的used pool，当申请内存的时候，就先从usedpools中找一块内存去分配block。
+
+### PyObject_Malloc
+
+```C
+void * PyObject_Malloc(size_t nbytes)
+{
+	block *bp;
+	poolp pool;
+	poolp next;
+	uint size;
+
+	// 如果申请的内存小于SMALL_REQUEST_THRESHOLD，使用python的小块内存池
+	// 否则，直接使用malloc
+	if ((nbytes -1)<SMALL_REQUEST_THRESHOLD){
+		size = (uint)(nbytes -1) >>ALIGMENT_SHIFT;
+		pool = usedpools[size + size];
+		// 如果usedpools中有可用的pool，那么就用这个pool来分配block
+		if (pool != pool->next){
+			// 在pool 中分配block
+			...
+			//分配结束后，如果pool中的block都被分配了，将pool从usedpools中移除
+			next = pool->next;
+			pool = pool->prevpool;
+			next->prevpool = pool;
+			pool->nextpool = next;
+			return (void*)bp;
+		}
+
+		//usedpools中没有可用的pool，从usable_arenas中获取pool
+		if (  useable_arenas == NULL){
+			usable_arenas = new_arena();
+			usable_arenas ->nextarena =usable_arenas->prevarena = NULL;
+		}
+
+		// 从useable_arenas的第一个arena中获取一个pool
+		pool = usable_arenas->freepools;
+		if (pool != NULL){
+			// 获取pool成功，将init pool，将pool放入used_pools中，返回分配的block
+			...
+		}
+	}
+	if (nbytes == 0){
+		nbytes = 1;
+	}
+	return (void*)malloc(nbytes);
+}
+```
 
