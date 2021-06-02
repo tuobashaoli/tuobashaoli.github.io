@@ -1,0 +1,86 @@
+---
+categories: blog
+date: '2021-06-02 10:43:18'
+description: it is so pythonic
+layout: post
+published: True
+title: "fastapi简介"
+tags: pythonic fastapi web
+---
+
+### 逛逛知乎
+
+都说经常逛社区会学到新知识，最近就了解了fastapi这个框架，算是自己还没学习的技能，就顺便了解下，
+
+[如何评价最近爆红的FastAPI？ - Angry Bugs的回答 - 知乎](https://www.zhihu.com/question/424133076/answer/1842762741)
+
+但是，对于fastapi的理解，其实不能直接拿来和flask比较的，可以参考这个，
+
+[请不要把 Flask 和 FastAPI 放到一起比较 - 李辉的文章 - 知乎](https://zhuanlan.zhihu.com/p/369591096)
+
+在我的项目中，不需要使用前端，团队中有专门的前端工程师，毕竟现在前后端分离是大趋势，vue和react又比较成熟，所以就看看能不能将flask转成fastapi，当然只是技术上的学习而已
+
+[fastapi官网](https://fastapi.tiangolo.com/)
+
+### 使用感受
+
+#### 写法简单了一点点而已
+
+```python
+@app.get("/items/{item_id}")
+def read_item(item_id:int,q:Optional[str]=None):
+	return {"item_id":item_id,"q":q}
+```
+
+对比一下flask的写法
+
+```python
+@app.route("/items/{item_id}",methods=["GET"])
+def read_item():
+	q=request.args.get("q")
+	return {"item_id":item_id,"q":q}
+```
+
+好像确实只是简单了一点点，￣□￣｜｜
+
+
+#### 原生支持asyncio
+
+```python
+@app.get("/items/{item_id}")
+async def read_item(item_id: int, q: Optional[str] = None):
+    return {"item_id": item_id, "q": q}
+```
+
+不过flask有个asyncio版本quart，也是高性能的
+
+#### 原生api文档
+
+有`/docs`和`/redoc`这俩个原生的文档页面，很方便，
+
+*不过我感觉flask应该也有相关的插件可以实现，有时间再找找*
+
+#### 基于python3.6+版本
+
+这个很重要，意味着不会有python2.7的包遗留的问题，也支持新特性，
+
+#### 类型检查
+
+pydantic包中的Basemodel，可以支持类型检查，这个还是很方便的，动态语言的没有类型检查，在调试的时候就有时要全链路调试，有类型检查后，就比较方便开发了
+
+```python
+class Item(baseModel)：
+	name: str
+	price: float
+	is_offer: bool = None
+
+@app.put("/items/{items_id}")
+def save_item(item_id: int,item: Item):
+	return {"item":item.pr,"item_id": item_id}
+```
+
+#### 高性能
+
+每次说到python的高性能，总感觉会被人嘲笑，但是，经过各种高性能框架的建设，fastapi已经有很强的性能表现了，"可与nodejs和Go比肩"
+
+更多特性，接着再看文档探索吧
