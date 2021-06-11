@@ -30,3 +30,61 @@ tags: C 编译
   - 存放与该机器相关的机器描述代码和相应的头文件和c文件
 - 与目标机器相关的生成器代码
 
+### 源码编译
+
+在编译C项目的时候，一般都是使用以下三个步骤
+
+1. ./configure
+2. make
+3. make install
+
+#### 配置
+
+./configure
+
+--prefix= 目标机器无关代码安装目录
+--exec-prefix= 目标机器相关代码安装目录
+--program-prefix= 安装程序名的前缀
+--program-suffix= 安装程序名的后缀
+--build= 指定生成编译器程序的机器和操作系统平台信息
+--host= 指定生成的编译器程序所运行的机器和操作系统平台信息
+--target= 指定生成的编译器程序所生成代码所运行的机器和操作系统信息
+--enable-FEATURE或者--disable-FEATURE
+--with-PACKAGE或者--without-PACKAGE
+
+
+#### 编译
+
+./configure之后，就会生成Makefile文件，就可以使用make工具进行编译了
+
+gcc在本机编译的时候，使用了bootstrapping的技术，即分为以下三步
+
+1. 使用一个现有的编译器将GCC源码编译，生成一个新的new_gcc1
+2. 使用new_gcc1重新编译GCC源码，生成另外一个新的编译器new_gcc2
+3. 使用new_gcc2重新编译GCC源码，生成另外一个编译器new_gcc3，比较new_gcc2和new_gcc3，如果相同，则编译成功
+
+#### 安装
+
+make install
+
+
+### 抽象语法树
+
+各种语言都会有自己的抽象语法树AST，比如java代码可以解析 java AST，C代码解析成C AST，然后再规范化，形成generic ast
+
+gcc有很多种AST的树节点，在文件gcc/tree.def文件中，有各种节点的定义，其格式如下
+
+```C
+#define DEFTREECODE (SYM, NAME, TYPE, LEN)
+```
+
+即标识、名称、类型、操作数个数，比如
+
+```
+/* 标识加法，有俩个操作数*/
+DEFTREECODE (PLUS_EXPR, "plus_expr", tcc_binary, 2)
+
+/* 取绝对值 */
+DEFTREECODE (ABS_EXPR, "abs_expr", tcc_unary, 1)
+```
+
