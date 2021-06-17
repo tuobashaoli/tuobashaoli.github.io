@@ -1,0 +1,251 @@
+---
+categories: blog
+date: '2021-06-16 17:50:18'
+description: let's make it
+layout: post
+published: True
+title: "make入门"
+tags: C 编译 make
+---
+
+### 随便说说
+
+作为一个集成构建工程师，一直对古老的构建工具make都是一直半解，这样下去是不行的，所以现在需要认真学习了
+
+### 一个简单的操作
+
+当你的工作目录下有一个叫makefile的文件，并且里面的内容是
+
+```shell
+a.txt: b.txt c.txt
+	cat b.txt c.txt > a.txt
+```
+
+并且，工作目录下也有b.txt和c.txt文件，那么当你执行`make a.txt`的时候，就会在控制台输出`cat b.txt c.txt > a.txt`，并且生成了文件a.txt。
+
+注意，**第二行开头必须是一个tab**
+
+
+#### 默认配置文件名是makefile
+
+当直接执行`make a.txt`，这里的a.txt就是在makefile定义的目标名，默认配置文件名是makefile，当然也可以手动指定自己命名的makefile，比如使用`make -f mymakefile a.txt`，那么就会使用mymakefile文件中的内容执行构建了。
+
+其实大多数构建系统都有这样的规则，比如使用docker打包镜像的时候，就是默认的Dockerfile文件名就叫Dockefile。
+
+#### makefile的基本格式
+
+```
+[目标名]: [依赖]
+[tab][shell 命令]
+```
+
+目标名就是执行make时所指定的，依赖一般是文件，make会在构建前确认依赖是否存在，shell命令就是执行具体的编译命令。
+
+这么看上去，就很像在jenkins中编写groovy的dsl配置文件。
+
+#### 执行make构建
+
+很简单，就是make加上目标名即可，实际make做的事情就是，找到对应的目标，然后检查目标的依赖是否存在，然后执行对应的语句。
+
+### makefile文件语法
+
+通过上面的例子，明白了makefile文件就是一种约定，约定与执行间有着对应关系，这其实就是想导演手中的剧本，当然，在it领域，我们称之为脚本。
+
+#### 目标可能是文件，也可能不是文件（伪目标）
+
+a.txt是一个文件，当执行make的时候，如果发现a.txt已存在，并且依赖文件没有改动，即modify时间没变，那么就不会执行构建，
+
+当执行目标不是文件，比如删除文件
+
+```
+clean:
+	rm *.o
+```
+
+那么，如果这个时候真的有个文件叫clean，那么这个clean就不会被执行，所以需要**伪目标**，
+
+使用`.PHONY`去声明伪目标即可，如下
+
+```
+.PHONY: clean
+clean:
+        rm *.o temp
+```
+
+#### 可以使用RECIPEPREFIX指定命令前缀
+
+默认使用tab键开始识别shell命令，实际上可以使用RECIPEPREFIX去自定义这标识，下面这个例子就是使用`>`去做命令开始标识
+
+```
+.RECIPEPREFIX = >
+all:
+>echo hello world
+```
+
+#### shell语句默认在行与行之间无联系
+
+如下是无法使用变量foo的
+
+```
+var-lost:
+    export foo=bar
+    echo "foo=[$$foo]"
+```
+
+有俩种方法，一种是携程一行，可以直接写在一行，也可以用反斜杠表示一行
+
+```
+var-kept:
+    export foo=bar; echo "foo=[$$foo]"
+```
+
+```
+var-kept:
+    export foo=bar; \
+    echo "foo=[$$foo]"
+```
+
+另一种是使用`.ONESHELL`命令
+
+```
+.ONESHELL:
+var-kept:
+    export foo=bar;
+    echo "foo=[$$foo]"
+```
+
+#### 注释默认会被打印，可以被关闭打印
+
+```
+cmd:
+	# 这个注释会被打印
+    @# 这个注释不会被打印
+```
+
+#### 模式匹配
+
+Make命令允许对文件名，进行类似正则运算的匹配，主要用到的匹配符是%。比如，假定当前目录下有 f1.c 和 f2.c 两个源码文件，需要将它们编译为对应的对象文件
+
+```
+%.o: %.c
+```
+
+等同于
+
+```
+f1.o: f1.c
+f2.o: f2.c
+```
+
+#### makefile的变量
+
+在makefile中，有如下的方法定义变量
+
+```
+VARIABLE = value
+# 在执行时扩展，允许递归扩展，即展开makefile后最终的值
+
+VARIABLE := value
+# 在定义时扩展，即在写这赋值语句的地方付给变量的值
+
+VARIABLE ?= value
+# 只有在该变量为空时才设置值。
+
+VARIABLE += value
+# 将值追加到变量的尾端。
+```
+
+**使用shell的变量需要使用俩个$$符号**
+
+```
+p:
+	echo $$HOME
+```
+
+#### 内置变量
+
+常用的内置变量
+
+1. `$(CC)` 指向当前编译器
+2. `$(MAKE)` 指向当前make工具
+
+#### 自动变量
+
+##### `$@`指代当前目标
+
+```
+a.txt b.txt:
+    touch $@
+```
+
+等同于
+
+```
+a.txt:
+    touch a.txt
+b.txt:
+    touch b.txt
+```
+
+##### `$<`指代第一个前置条件
+
+```
+a.txt: b.txt c.txt
+    cp $< $@
+```
+
+等同于
+
+```
+a.txt: b.txt c.txt
+    cp b.txt a.txt
+```
+
+##### `$?` 指代比目标更新的所有前置条件
+
+##### `$^` 指代所有前置条件，之间以空格分隔
+
+##### `$*` 指代匹配符 % 匹配的部分
+
+比如% 匹配 f1.txt 中的f1 ，$* 就表示 f1
+
+#### 判断和循环
+
+使用BASH的判断和循环
+
+```
+ifeq ($(CC),gcc)
+  libs=$(libs_for_gcc)
+else
+  libs=$(normal_libs)
+endif
+```
+
+```
+LIST = one two three
+all:
+    for i in $(LIST); do \
+        echo $$i; \
+    done
+```
+
+#### 函数
+
+- shell
+	- 执行shell语句
+```
+srcfiles := $(shell echo src/{00..99}.txt)
+```
+
+- subst
+	- 用于字符串替换
+```
+$(subst ee,EE,feet on the street)
+```
+
+- patsubst
+	- patsubst 函数用于模式匹配的替换
+```
+$(patsubst %.c,%.o,x.c.c bar.c)
+```
+
