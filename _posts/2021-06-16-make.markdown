@@ -1,7 +1,7 @@
 ---
 categories: blog
 date: '2021-06-16 17:50:18'
-description: let's make it
+description: let's make
 layout: post
 published: True
 title: "make入门"
