@@ -5,7 +5,7 @@ description: it is so pythonic
 layout: post
 published: True
 title: "python字典源码解读"
-tags: pythonic
+tags: pythonic 源码解读
 ---
 
 # 定义
