@@ -1,4 +1,4 @@
----
+﻿---
 categories: blog
 date: '2022-03-26 17:50:18'
 description: it is pythonic
