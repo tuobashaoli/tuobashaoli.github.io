@@ -116,3 +116,163 @@ typedef struct {
   - 用一个链表/红黑树存储这些key，适合经常插入和删除，访问的时间可能会增加
   - 建立公共益处区，专门存储冲突的key
 
+dict的各个接口函数的实现，都在文件`Objects/dictobject.c`文件中，
+
+一般都是创建dict和给dict添加元素的时候，就会遇到hash冲突，所以可以直接观察插入元素的实现逻辑，从中看看python如何解决hash冲突的
+
+
+```
+
+static int
+insertdict(PyDictObject *mp/*被插入的字典*/, PyObject *key/*需要插入字典的键*/, Py_hash_t hash/*需要插入字典的键的hash*/, PyObject *value/*需要插入字典的值*/)
+{
+    PyObject *old_value;
+    PyDictKeyEntry *ep;
+
+    Py_INCREF(key); //添加引用计数
+    Py_INCREF(value); //添加引用计数
+    if (mp->ma_values != NULL && !PyUnicode_CheckExact(key)) {
+        // ma_values 不为空表示该字典是分离表字典，PyUnicode_CheckExact检查key是否是unicode对象，不能是unicode子类对象
+        // 如果mp是分离表字典，且key不是unicode对象
+        if (insertion_resize(mp) < 0)
+            // 如果无法给mp申请内存，转换成联合表字典，那么直接失败，
+            goto Fail;
+    }
+
+    Py_ssize_t ix = mp->ma_keys->dk_lookup(mp, key, hash, &old_value);
+    // 调用dk_lookup查找需要插入的键值对所在的位置，理论上，为了保证该位置可以插入，那么这个查找函数就需要返回解决hash冲突后的地址了
+    // 所以查看dk_lookup的实现
+    if (ix == DKIX_ERROR)
+        goto Fail;
+
+    assert(PyUnicode_CheckExact(key) || mp->ma_keys->dk_lookup == lookdict);
+    MAINTAIN_TRACKING(mp, key, value);
+
+    /* When insertion order is different from shared key, we can't share
+     * the key anymore.  Convert this instance to combine table.
+     */
+    if (_PyDict_HasSplitTable(mp) &&
+        ((ix >= 0 && old_value == NULL && mp->ma_used != ix) ||
+         (ix == DKIX_EMPTY && mp->ma_used != mp->ma_keys->dk_nentries))) {
+        if (insertion_resize(mp) < 0)
+            goto Fail;
+        ix = DKIX_EMPTY;
+    }
+
+    if (ix == DKIX_EMPTY) {
+        /* Insert into new slot. */
+        assert(old_value == NULL);
+        if (mp->ma_keys->dk_usable <= 0) {
+            /* Need to resize. */
+            if (insertion_resize(mp) < 0)
+                goto Fail;
+        }
+        Py_ssize_t hashpos = find_empty_slot(mp->ma_keys, hash);
+        ep = &DK_ENTRIES(mp->ma_keys)[mp->ma_keys->dk_nentries];
+        dictkeys_set_index(mp->ma_keys, hashpos, mp->ma_keys->dk_nentries);
+        ep->me_key = key;
+        ep->me_hash = hash;
+        if (mp->ma_values) {
+            assert (mp->ma_values[mp->ma_keys->dk_nentries] == NULL);
+            mp->ma_values[mp->ma_keys->dk_nentries] = value;
+        }
+        else {
+            ep->me_value = value;
+        }
+        mp->ma_used++;
+        mp->ma_version_tag = DICT_NEXT_VERSION();
+        mp->ma_keys->dk_usable--;
+        mp->ma_keys->dk_nentries++;
+        assert(mp->ma_keys->dk_usable >= 0);
+        ASSERT_CONSISTENT(mp);
+        return 0;
+    }
+
+    if (old_value != value) {
+        if (_PyDict_HasSplitTable(mp)) {
+            mp->ma_values[ix] = value;
+            if (old_value == NULL) {
+                /* pending state */
+                assert(ix == mp->ma_used);
+                mp->ma_used++;
+            }
+        }
+        else {
+            assert(old_value != NULL);
+            DK_ENTRIES(mp->ma_keys)[ix].me_value = value;
+        }
+        mp->ma_version_tag = DICT_NEXT_VERSION();
+    }
+    Py_XDECREF(old_value); /* which **CAN** re-enter (see issue #22653) */
+    ASSERT_CONSISTENT(mp);
+    Py_DECREF(key);
+    return 0;
+
+Fail:
+    Py_DECREF(value); //异常情况，去除添加的引用计数
+    Py_DECREF(key); //异常情况，去除添加的引用计数
+    return -1;
+}
+```
+
+
+没有直接查找到`dk_lookup`的直接实现,是在实际调用中，给`dk_lookup`赋值为各种`lookdict`函数
+
+```
+static Py_ssize_t _Py_HOT_FUNCTION
+lookdict(PyDictObject *mp, PyObject *key,
+         Py_hash_t hash, PyObject **value_addr)
+{
+    size_t i, mask, perturb;
+    PyDictKeysObject *dk;
+    PyDictKeyEntry *ep0;
+
+top:
+    dk = mp->ma_keys;
+    ep0 = DK_ENTRIES(dk);
+    mask = DK_MASK(dk);
+    perturb = hash;
+    i = (size_t)hash & mask;
+
+    for (;;) {
+        Py_ssize_t ix = dictkeys_get_index(dk, i);
+        if (ix == DKIX_EMPTY) {//如果查找出的位置是空的，表示，这个位置可以插入新的键值对，那么直接返回这个地址
+            *value_addr = NULL;
+            return ix;
+        }
+        if (ix >= 0) {
+            PyDictKeyEntry *ep = &ep0[ix];
+            assert(ep->me_key != NULL);
+            if (ep->me_key == key) {// key一致，表示这个位置就是要找的地方
+                *value_addr = ep->me_value;
+                return ix;
+            }
+            if (ep->me_hash == hash) { // key不一致，但是hash一直，表示发生了hash冲突
+                PyObject *startkey = ep->me_key;
+                Py_INCREF(startkey);
+                int cmp = PyObject_RichCompareBool(startkey, key, Py_EQ);
+                Py_DECREF(startkey);
+                if (cmp < 0) {
+                    *value_addr = NULL;
+                    return DKIX_ERROR;
+                }
+                if (dk == mp->ma_keys && ep->me_key == startkey) {
+                    if (cmp > 0) {
+                        *value_addr = ep->me_value;
+                        return ix;
+                    }
+                }
+                else {
+                    /* The dict was mutated, restart */
+                    goto top;
+                }
+            }
+        }
+        perturb >>= PERTURB_SHIFT;
+        i = (i*5 + perturb + 1) & mask; // ix <0,否则，将i运算后，进行下一轮计算
+    }
+    Py_UNREACHABLE();
+}
+```
+
+通过上面的源码，看出来，python使用了实现起来最简单的开放地址法解决冲突，果然时刻践行着"怎么简单怎么来"的思想
