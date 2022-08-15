@@ -1,0 +1,63 @@
+---
+categories: blog
+date: '2022-08-15 18:37:18'
+description: prolog it
+layout: post
+published: True
+title: "prolog"
+tags: prolog
+---
+
+# 随便说说
+
+最近在写gerrit的rules.pl，一开始我以为是perl语言，看了文档才发现这个是prolog语言，于是，就搜文档看看，这个语言的思路和平常的开发语言很不一样，很清奇
+
+# 一个例子
+
+```prolog
+% 表示love(X,Y)为true，语句以.结尾，X -> love -> Y，这个是单向的，不能理解成Y->love->X
+love(X,Y).
+
+% 表示当love(X,Y)为true、且love(Y,X)为true的时候，lovers(X,Y)为true，右边是左边的充要条件
+lovers(X,Y):-love(X,Y),love(Y,X).
+
+%
+```
+
+# 一些理解
+
+- prolog程序没有特定的运行顺序，其运行顺序是由电脑决定的，而不是编程序的人。
+- prolog的原理就是关系数据库，它是建立在关系数据库的基础上的。
+- 强大的递归功能
+
+# 知识点
+
+## 事实
+
+事实（facts）是prolog中最简单的谓词（predicate）。它和关系数据库中的记录十分相似。
+
+语法结构如下
+`pred(arg1, arg2, … argN).`
+
+其中pred为谓词的名称。arg1，…为参数，共有N个。
+
+参数可以是以下四种之一：
+1.  整数（integer)
+2.  原子（atom）
+  由小写字母开头的字符串。
+3.  变量（variable）
+  由大写字母或下划线（_）开头。
+4.  结构（structure）
+
+可以将事实理解成，向数据库里面写数据。
+
+## 常用的内部谓词
+
+1.  write/1 把参数当作字符串输出到屏幕
+2.  nl/0 在屏幕上输出回车
+3.  tab/1 输出n个空格
+
+
+
+
+
