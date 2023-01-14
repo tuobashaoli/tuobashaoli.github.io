@@ -4,7 +4,7 @@ date: '2022-06-16 17:50:18'
 description: let's make
 layout: post
 published: True
-title: "make入门"
+title: "make入门2"
 tags: C 编译 make
 ---
 
