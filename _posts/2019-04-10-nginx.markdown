@@ -9,7 +9,7 @@ title: "Nginx it?"
 # 一、简介
 
 nginx是轻量级、高性能的web服务器和反向代理服务器
-```conf
+```
 user  nginx;
 worker_processes  1;
 error_log  /var/log/nginx/error.log warn;  #定义错误日志存放地址和等级
@@ -34,6 +34,8 @@ client_max_body_size 10m; #单次请求的最大字节数
 server {
    server_name mobileprj.rd.company.net; #监听的域名
    listen 80;#监听的端口
+   auth_basic "welcome to gerrit"; # 添加认证
+   auth_basic_user_file password_file_path; # htpasswd -c -b password_file_path username password 生成的密码文件
    location /redmine { #根据路径分发
    proxy_redirect off; #隐藏反向代理的服务器的头信息
    proxy_set_header Host $host; #设置转发请求头的host，保留此设置，避免反向代理时无限循环重定向
