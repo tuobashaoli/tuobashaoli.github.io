@@ -86,7 +86,7 @@ Gerrit.install(plugin => {
     console.log(topic_changes.length);
     changes = []
     for(var index = 0; index< topic_changes.length;index++){
-      change_href = topic_changes[index].shadowRoot.querySelector("a").getAttribute("href");
+      change_href = window.location.href.replace(window.location.pathname,"") + topic_changes[index].shadowRoot.querySelector("a").getAttribute("href");
       console.log(change_href);
       changes.push(change_href);
     }
