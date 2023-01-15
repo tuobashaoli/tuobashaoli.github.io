@@ -51,3 +51,49 @@ Gerrit.install(plugin => {
 });
 ```
 
+# Promise
+
+在查看到高级api的时候，发现`restApi`有接口返回Promise对象,所以需要学习一下
+
+# 一个复制出所有topic其他提交的按钮
+
+```javascript
+Gerrit.install(plugin => {
+  const endpoint = 'commit-container';
+  const domHook = plugin.hook(endpoint);
+
+  function copyToClipboard(s) {
+            if (window.clipboardData) {
+                window.clipboardData.setData('text', s);
+            } else {
+                (function(s) {
+                    document.oncopy = function(e) {
+                        e.clipboardData.setData('text', s);
+                        e.preventDefault();
+                        document.oncopy = null;
+                    }
+                })(s);
+                document.execCommand('Copy');
+            }
+        }
+
+
+  domHook.onAttached(element => {
+    const el = element.appendChild(document.createElement('button'));
+    el.innerHTML = "copy"
+    el.onclick = function(){
+      topic_changes = document.getElementById("app").shadowRoot.getElementById("app-element").shadowRoot.querySelector("main gr-change-view").shadowRoot.getElementById("relatedChanges").shadowRoot.querySelector("gr-endpoint-decorator").querySelector("#sameTopic > gr-related-collapse").getElementsByTagName("gr-related-change")
+    console.log(topic_changes.length);
+    changes = []
+    for(var index = 0; index< topic_changes.length;index++){
+      change_href = topic_changes[index].shadowRoot.querySelector("a").getAttribute("href");
+      console.log(change_href);
+      changes.push(change_href);
+    }
+      copyToClipboard(changes.join());
+
+    }
+  });
+});
+```
+
