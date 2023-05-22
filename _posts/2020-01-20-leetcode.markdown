@@ -101,3 +101,84 @@ class Solution {
     }
 ```
 
+### 最小覆盖字串
+
+滑动窗口，当窗口右边界不断滑动，从而覆盖了目标子串中的所有元素时，收缩左边界，直到窗口刚刚覆盖目标字串，记录此时的窗口大小，然后将左窗口再收缩一个字符，并且更新是否覆盖字串的标记，继续滑动
+
+```python
+import  collections
+def minWindow( s: str, t: str) -> str:
+    need=collections.defaultdict(int)
+    for c in t:
+        need[c]+=1
+    needCnt=len(t)
+    i=0
+    res=(0,float('inf')) #0和无穷大
+    for j,c in enumerate(s):
+        if need[c]>0:
+            needCnt-=1
+        need[c]-=1
+        if needCnt==0:       #步骤一：滑动窗口包含了所有T元素
+            while True:      #步骤二：增加i，排除多余元素
+                c=s[i]
+                if need[c]==0: #表示c这个字符属于t
+                    break
+                need[c]+=1 #表示c这个字符不属于t，继续找下一个字符
+                i+=1
+            if j-i<res[1]-res[0]:   #记录结果
+                res=(i,j)
+            need[s[i]]+=1  #步骤三：i增加一个位置，寻找新的满足条件滑动窗口
+            needCnt+=1
+            i+=1
+    return '' if res[1]>len(s) else s[res[0]:res[1]+1]    #如果res始终没被更新过，代表无满足条件的结果
+```
+
+### 单向链表寻找中间节点
+
+快慢双指针，快指针遍历到末尾的时候，慢指针就是到中间节点
+
+```
+class Node():
+
+    def __init__(self, val):
+        self.val = val
+        self.next = None
+
+# 单向链表中间节点
+def findmid(node):
+    first = node
+    second = node
+    while first and first.next:
+        #print(first.val)
+        first = first.next.next
+        second = second.next
+    return second.val
+```
+
+### 最多颜色的车辆
+
+滑动窗口，每次移动窗口的时候，只需要比较新加入的元素的个数和之前记录的最多值
+
+
+```python
+def maxColor(color, win):
+    count = {
+        "0":0,
+        "1":0,
+        "2":0
+    }
+    l =0
+    r = l + win
+    for c in color[l:r]:
+        count[c] += 1
+    maxV = max(count.values())
+    while r < len(color):
+        add = color[r]
+        remove = color[l]
+        l += 1
+        r +=1
+        count[add]+=1
+        count[remove]-=1
+        maxV = max(maxV,count[add])
+    return maxV
+```
