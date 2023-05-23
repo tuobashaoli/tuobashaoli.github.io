@@ -182,3 +182,38 @@ def maxColor(color, win):
         maxV = max(maxV,count[add])
     return maxV
 ```
+
+### 数位DP
+
+###  电话号码字母组合
+
+使用回溯算法，套公式即可
+
+```python
+def letterCombinations(digits):
+    n_dict ={
+        "2":["a","b","c"],
+        "3":["d","e","f"],
+        "4":["g","h","i"],
+        "5":["j","k","l"],
+        "6":["m","n","o"],
+        "7":["p","q","r","s"],
+        "8":["t","u","v"],
+        "9":["w","x","y","z"]
+    }
+    if not digits:
+        return []
+    tmp = []
+    result = []
+    def backtrack(i):
+        if i >= len(digits):
+            result.append("".join(tmp))
+            return
+        for item in n_dict[digits[i]]:
+            tmp.append(item)
+            backtrack(i+1)
+            tmp.pop()
+    backtrack(0)
+    return result
+```
+
