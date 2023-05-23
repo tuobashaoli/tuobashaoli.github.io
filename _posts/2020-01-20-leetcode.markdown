@@ -11,22 +11,23 @@ tags: "leetcode"
 
 用临时StringBuffer存储最长子串，如果遇到重复的字符，将已存储的最长子串中的重复位置前的部分全部删除，并记录此时的长度，时间复杂度是O(n),空间复杂度O(n)
 
-```java
-class Solution {
-    public int lengthOfLongestSubstring(String s) {
-        int j =0;
-        StringBuffer tmp = new StringBuffer();
-        for(int i=0;i< s.length();i++){
-            int k = tmp.toString().indexOf(s.substring(i,i+1));
-            if(  k != -1  ){
-                j = Math.max(j,tmp.length());
-                tmp.delete(0,k+1);
-            }
-            tmp.append(s.charAt(i));
-        }
-        return Math.max(j,tmp.length());
-    }
-}
+```python
+def getuniqsub(s):
+    i=0
+    j=0
+    res = ""
+    while j < len(s):
+        # print(s[i:j])
+        if s[j] not in s[i:j]:
+            j += 1
+            if j == len(s):
+                if j - i > len(res):
+                    res = s[i:j]
+        else:
+            if j - i > len(res):
+                res = s[i:j]
+            i = i + s[i:j].index(s[j]) + 1
+    return res
 ```
 
 ### 最长公共前缀
