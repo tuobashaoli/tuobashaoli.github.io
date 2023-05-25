@@ -1088,6 +1088,18 @@ else:
 RESULT = _r
 ```
 
+### 元编程
+
+所有类的继承关系的始祖都是`Object`，所有类型关系的始祖都是`type`
+
+```python
+# 使用type定义类，参数是名称、继承、私有化
+
+K1 = type('Klass',(),{"name":"K1"})
+K2 = type('Klass',(K1,),{"age":1})
+print(K2.name)
+```
+
 ## PyCodeObject
 
 python源码编译后，生成一个pyc文件，存放着PyCodeObject对象
