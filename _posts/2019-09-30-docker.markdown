@@ -254,10 +254,10 @@ docker import ubuntu.tar ubuntu:1209 # 将ubuntu.tar载入成新的镜像
 
 ### 网络模式
 
-1. host模式，主机模式
+1. host模式，主机模式，直接使用宿主机的ip和端口
 
-2. container模式，容器模式
+2. container模式，容器模式，和指定的容器共享ip和端口
 
-3. bridge模式，网桥模式
+3. bridge模式，网桥模式，容器使用独立的network namespace，创建虚拟网卡，然后给容器分配ip和端口，然后在iptables配置DNAT，实现端口转发
 
 3. none，无网络
