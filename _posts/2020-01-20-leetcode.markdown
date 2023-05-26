@@ -218,3 +218,59 @@ def letterCombinations(digits):
     return result
 ```
 
+### 最大平分数组
+
+```python
+def getR(input_list: list):
+    input_list.sort(reverse=True)
+    sumV = sum(input_list)
+    n = len(input_list)
+    while n>= 1:
+        if split(input_list,n):
+            return n
+        n -= 1
+
+
+def split(input_list,n):
+    # 判断列表能不能被均分成n个小组
+
+    # 如果列表和不能均分成n份，那么一定是false
+    if sum(input_list) % n != 0:
+        return False
+
+    subSum = sum(input_list) / n
+
+    # 如果均分值小于最大值，那么一定是false，这里默认列表里面不能有负值
+    if subSum < max(input_list):
+        return False
+
+    # 列表已经倒序排序了，如果是单个元素就等于均分值，那么这个元素就直接剔除
+    while len(input_list) > 0 and input_list[0] == subSum:
+        input_list.pop(0)
+        n -= 1
+
+    buckets = [0]* n
+
+    def backtrack(input, index, buckets,subSum):
+        # 如果将所有元素都放到桶里面了，那么就说明可以成功均分
+        if index == len(input):
+            return True
+
+        select = input[index]
+
+        for i in range(len(buckets)):
+            # 原因：如果元素和相等，那么 nums[index] 选择上一个桶和选择当前桶可以得到的结果是一致的
+            if i > 0 and buckets[i] == buckets[i-1]:
+                continue
+
+            # 将当前球放入桶中
+            if select + buckets[i] <= subSum:
+                buckets[i] += select
+                if backtrack(input,index+1,buckets,subSum):
+                    return True
+                buckets[i] -= select
+        return False
+
+    return backtrack(input_list,0,buckets,subSum)
+```
+
