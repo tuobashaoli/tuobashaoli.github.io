@@ -274,3 +274,38 @@ def split(input_list,n):
     return backtrack(input_list,0,buckets,subSum)
 ```
 
+### 计算网络信号强度
+
+广度优先遍历，核心是找出广度迭代方式，即遍历上下左右的坐标，以及每次将新赋值的坐标作为下一次遍历的列表
+
+```python
+def getSignal(arr,target_i,target_j):
+    m = len(arr)
+    n = len(arr[0])
+    # 需要遍历上下左右
+    offsets = [(0,1),(0,-1),(-1,0),(0,1)]
+    queue = []
+    for i  in range(m):
+        for j in range(n):
+            if arr[i][j] > 0:
+                queue.append((i,j))
+
+    while len(queue)>0:
+        newQueue = []
+        for i,j in queue:
+            val = arr[i][j] - 1
+            if val == 0:
+                break
+            for offsetX,offsetY in offsets:
+                x = i+offsetX
+                y = j+offsetY
+                if x>=0 and x< m and y >=0 and y<n:
+                    # print(x,y)
+                    if arr[x][y] == 0:
+                        arr[x][y] = val
+                        # 将新赋值的坐标，作为下一次遍历的列表
+                        newQueue.append((x,y))
+        queue = newQueue
+    return arr[target_i][target_j]
+```
+
