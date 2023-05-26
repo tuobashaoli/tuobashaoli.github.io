@@ -309,3 +309,58 @@ def getSignal(arr,target_i,target_j):
     return arr[target_i][target_j]
 ```
 
+### 最优高铁城市修建方案
+
+最小生成树，在无向联通图中，权重和最小的让所有节点都链接的树就是最小生成树，n个节点，n-1条边，没有环
+
+Prim算法：基于顶点寻找，类似贪心算法，从一个顶点出发，不断寻找对外权重最小的边，如果权重最小的边有多个，那么就任意选择一个，
+
+Kruskal算法：将所有边按照权重排序，从小到大，依次添加，当添加一条边的时候，如果形成了环，那么就抛弃这条边，选下一个，直到选了n-1条边
+
+并查集：
+
+
+### 士兵过河
+
+
+
+```python
+def getMinTime(times,t):
+
+    def getMax(t1,t2):
+        if t1*10 >= t2:
+            return t2
+        else:
+            return t1*10
+
+    # 总人数
+    n = len(times)
+
+    # 排序下
+    times.sort()
+
+    # 动态规划数组初始化
+    dp = [0] * n
+    # 第一个人渡河时间
+    dp[0] = times[0]
+
+    # 如果最短的渡河时间的人都大于时间限制，那么没有人可以渡河
+    if dp[0] > t:
+        return "0 0"
+
+    dp[1] = getMax(times[0],times[1])
+    # 如果俩个人一起渡河的时间超过限制时间，那么只能一个人渡河了
+    if dp[1] > t:
+        return f"1 {dp[0]}"
+
+    for i in range(2,n):
+        dp[i] = min(dp[i-1] + times[0]+getMax(times[0],times[i]),
+                    dp[i-2]+ times[0]+getMax(times[i-1],times[i]) + times[1]+ getMax(times[0],times[1]))
+        if dp[i] > t:
+            return f"{i} {dp[i-1]}"
+
+    return f"{n} {dp[n-1]}"
+```
+
+
+
