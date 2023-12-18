@@ -114,43 +114,4 @@ list [a,b,c]
 [X|Y] X 是列表头(head), 它可以是一个列表，或其他任何数据结构
 Y 是列表尾(tail), 它只能可以是一个列表
 
-# gerrit
-
-gerrit中的设置submit的规则时，需要设置成，至少有一个+2，并且总分是4分及以上才能submit
-
-```prolog
-sum_list([], 0).
-sum_list([H | Rest], Sum) :- sum_list(Rest,Tmp), Sum is H + Tmp.
-
-% 这部分是统计2的个数
-count_twos([], 0). % 初始条件
-count_twos([2|T], N) :- count_twos(T, N1), N is N1 + 1. % 动态规划之表第一个元素是2
-count_twos([H|T], N) :- H \= 2, count_twos(T, N). % 动态规划之表第一个元素不是2
-
-
-add_category_min_score(In, Category, Min,  P) :-
-    findall(X, gerrit:commit_label(label(Category,X),R),Z),
-    count_twos(Z, Twos), % 统计2的个数
-    Twos >= 1, % 如果打分列表中的2的个数大于1，即至少有一个2
-    sum_list(Z, Sum),
-    % member(2, Z),!,member没法直接用，这里会报错
-    Sum >= Min, !,
-    gerrit:commit_label(label(Category, V), U),
-    V >= 1,
-    !,
-    P = [label(Category,ok(U)) | In].
-
-add_category_min_score(In, Category,Min,P) :-
-    P = [label(Category,need(Min)) | In].
-
-submit_rule(S) :-
-    gerrit:default_submit(X),
-    X =.. [submit | Ls],
-    gerrit:remove_label(Ls,label('Code-Review',_),NoCR),
-    add_category_min_score(NoCR,'Code-Review', 4, Labels),
-    S =.. [submit | Labels].
-```
-
-通过以上例子发现，prolog语言实际上非常适合用来实现动态规划，简直是完美符合
-
 
