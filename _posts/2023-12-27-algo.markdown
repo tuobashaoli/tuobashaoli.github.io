@@ -1,99 +1,31 @@
 ---
 categories: blog
-date: '2023-01-14 21:56:18'
-description: gerrit js it
+date: '2023-12-27 22:56:18'
+description: slide window
 layout: post
 published: True
-title: "gerrit js plugin"
-tags: gerrit
+title: "滑动窗口算法的一个应用"
+tags: algo
 ---
 
-# 随便说下
+# 我是在瞎说
 
-当前做了一些gerrit的插件开发，主要是前端的js插件，记录一些坑
-
-主要文档
-
-- [官方插件说明](https://www.gerritcodereview.com/plugins.html)
-
-- 自己搭建的gerrit的前端插件地址： `http://localhost:89/Documentation/pg-plugin-dev.html`
-
-# 入门
-
-文档中给了一个最简单的前端插件使用，将下面这个js放到gerrit安装目录中的plugins目录中，就可以直接生效了
-
-```javascript
-Gerrit.install(plugin => {
-  const domHook = plugin.hook('reply-text');
-  domHook.onAttached(element => {
-    if (!element.content) { return; }
-    // element.content is a reply dialog text area.
-  });
-});
-
-```
-
-# hook
-
-这个`reply-text`就是页面上的一个组件，可以hook的组件必须是官方支持的，具体那些页面组件可以hook，在`http://localhost:89/Documentation/pg-plugin-endpoints.html`
-
-这里面就有一个比较坑人的地方，就是文档里面提示了有一些参数可以使用，比如当hook的对象是`change-view-integration`的时候，提示有change和revision这个俩个参数可以使用，
-
-但是结合上面的示例代码，发现根本没有这俩个参数！翻遍了所有文档，都没见到如何使用这俩个参数，试了无数遍，最终发现，这俩个参数是存在`element`对象里面的字段，所以可以如下调用
-
-```
-Gerrit.install(plugin => {
-  const endpoint = 'change-view-integration';
-  plugin.hook(endpoint).onAttached(element => {
-    console.log(element.change);
-    console.log(element.revision);
-  });
-});
-```
-
-# Promise
-
-在查看到高级api的时候，发现`restApi`有接口返回Promise对象,所以需要学习一下
-
-# 一个复制出所有topic其他提交的按钮
-
-```javascript
-Gerrit.install(plugin => {
-  const endpoint = 'commit-container';
-  const domHook = plugin.hook(endpoint);
-
-  function copyToClipboard(s) {
-            if (window.clipboardData) {
-                window.clipboardData.setData('text', s);
-            } else {
-                (function(s) {
-                    document.oncopy = function(e) {
-                        e.clipboardData.setData('text', s);
-                        e.preventDefault();
-                        document.oncopy = null;
-                    }
-                })(s);
-                document.execCommand('Copy');
-            }
-        }
+最近遇到一个问题，就是jenkins job上传日志到es的时候，需要针对关键字前后各100行进行上传，其余的全部丢弃，（别问我为什么丢弃，es不至于这点儿日志里都撑不住），但是日志是实时的流式生成，logstash似乎不直接支持这类处理，所以需要自己想点儿法子
 
 
-  domHook.onAttached(element => {
-    const el = element.appendChild(document.createElement('button'));
-    el.innerHTML = "copy"
-    el.onclick = function(){
-      topic_changes = document.getElementById("app").shadowRoot.getElementById("app-element").shadowRoot.querySelector("main gr-change-view").shadowRoot.getElementById("relatedChanges").shadowRoot.querySelector("gr-endpoint-decorator").querySelector("#sameTopic > gr-related-collapse").getElementsByTagName("gr-related-change")
-    console.log(topic_changes.length);
-    changes = []
-    for(var index = 0; index< topic_changes.length;index++){
-      change_href = window.location.href.replace(window.location.pathname,"") + topic_changes[index].shadowRoot.querySelector("a").getAttribute("href");
-      console.log(change_href);
-      changes.push(change_href);
-    }
-      copyToClipboard(changes.join());
+# 我爱说实话
 
-    }
-  });
-});
-```
+那么维护一个滑动窗口就很有必要了，
+
+1. 初始化一个滑动窗口，这个窗口容量为201，内容是空的
+2. 初始化一个flag = false，表明窗口内有没有包含关键字的一行日志
+3. 每当生成一行日志，
+	1. 如果这行日志不包括关键字，那么把这行日志入栈滑动窗口
+	2. 如果包括关键字，那么把这行日志入栈滑动窗口，并记录关键字位置/坐标1，并记录此时已经找到关键字了flag = true，准备100行后上传日志，即把窗口的剩余容量调整为100
+	3. 如果接下来又遇到了一行包括关键字的日志，但是窗口还没填满，那么再次将窗口的剩余容量调整为100
+	4. 一旦窗口满了，如果flag == true，将窗口内的所有日志上传，然后清空重置窗口和flag，当然，flag == false，也清空充值窗口和flag。
+	5. 循环以上1-4即可
+
+时间为O(n)，空间大概也是O(n)吧，不是很确定
+
 
