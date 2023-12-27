@@ -1,0 +1,99 @@
+---
+categories: blog
+date: '2023-01-14 21:56:18'
+description: gerrit js it
+layout: post
+published: True
+title: "gerrit js plugin"
+tags: gerrit
+---
+
+# 随便说下
+
+当前做了一些gerrit的插件开发，主要是前端的js插件，记录一些坑
+
+主要文档
+
+- [官方插件说明](https://www.gerritcodereview.com/plugins.html)
+
+- 自己搭建的gerrit的前端插件地址： `http://localhost:89/Documentation/pg-plugin-dev.html`
+
+# 入门
+
+文档中给了一个最简单的前端插件使用，将下面这个js放到gerrit安装目录中的plugins目录中，就可以直接生效了
+
+```javascript
+Gerrit.install(plugin => {
+  const domHook = plugin.hook('reply-text');
+  domHook.onAttached(element => {
+    if (!element.content) { return; }
+    // element.content is a reply dialog text area.
+  });
+});
+
+```
+
+# hook
+
+这个`reply-text`就是页面上的一个组件，可以hook的组件必须是官方支持的，具体那些页面组件可以hook，在`http://localhost:89/Documentation/pg-plugin-endpoints.html`
+
+这里面就有一个比较坑人的地方，就是文档里面提示了有一些参数可以使用，比如当hook的对象是`change-view-integration`的时候，提示有change和revision这个俩个参数可以使用，
+
+但是结合上面的示例代码，发现根本没有这俩个参数！翻遍了所有文档，都没见到如何使用这俩个参数，试了无数遍，最终发现，这俩个参数是存在`element`对象里面的字段，所以可以如下调用
+
+```
+Gerrit.install(plugin => {
+  const endpoint = 'change-view-integration';
+  plugin.hook(endpoint).onAttached(element => {
+    console.log(element.change);
+    console.log(element.revision);
+  });
+});
+```
+
+# Promise
+
+在查看到高级api的时候，发现`restApi`有接口返回Promise对象,所以需要学习一下
+
+# 一个复制出所有topic其他提交的按钮
+
+```javascript
+Gerrit.install(plugin => {
+  const endpoint = 'commit-container';
+  const domHook = plugin.hook(endpoint);
+
+  function copyToClipboard(s) {
+            if (window.clipboardData) {
+                window.clipboardData.setData('text', s);
+            } else {
+                (function(s) {
+                    document.oncopy = function(e) {
+                        e.clipboardData.setData('text', s);
+                        e.preventDefault();
+                        document.oncopy = null;
+                    }
+                })(s);
+                document.execCommand('Copy');
+            }
+        }
+
+
+  domHook.onAttached(element => {
+    const el = element.appendChild(document.createElement('button'));
+    el.innerHTML = "copy"
+    el.onclick = function(){
+      topic_changes = document.getElementById("app").shadowRoot.getElementById("app-element").shadowRoot.querySelector("main gr-change-view").shadowRoot.getElementById("relatedChanges").shadowRoot.querySelector("gr-endpoint-decorator").querySelector("#sameTopic > gr-related-collapse").getElementsByTagName("gr-related-change")
+    console.log(topic_changes.length);
+    changes = []
+    for(var index = 0; index< topic_changes.length;index++){
+      change_href = window.location.href.replace(window.location.pathname,"") + topic_changes[index].shadowRoot.querySelector("a").getAttribute("href");
+      console.log(change_href);
+      changes.push(change_href);
+    }
+      copyToClipboard(changes.join());
+
+    }
+  });
+});
+```
+
