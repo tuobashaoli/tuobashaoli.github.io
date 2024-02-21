@@ -2,7 +2,7 @@
 categories: blog
 date: '2024-02-20 21:34:18'
 description: learn deeply
-layout: true
+layout: post
 published: False
 title: "深度学习"
 tags: deeplearning
