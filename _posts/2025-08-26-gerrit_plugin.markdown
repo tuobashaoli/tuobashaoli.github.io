@@ -69,3 +69,28 @@ bazel build //plugins/checks:checks
 终成正果，阿弥陀佛 ✔
 
 ![avatar](/assets/images/gerrit_plugin_build_pass.png)
+
+
+# checks插件
+
+checks插件是官方提供的前后端都一起剩下的插件，理解了这个插件，就基本掌握了gerrit的插件开发
+
+首先看一下官方画的大饼
+
+`https://gerrit-review.googlesource.com/Documentation/pg-plugin-checks-api.html`
+
+
+![avatar](/assets/images/user-checks-overview.png)
+
+
+这里的功能包括
+
+1. 和标签比如Code-Style联动，检查项失败标签自动-1
+2. 展示失败详情和链接，这个链接可以是自定义的具体CI上的检查详情
+3. 红色表示失败，黄色表示告警，绿色表示成功，灰色表示等待或运行，蓝色表示有信息，展示各个检查项的状态
+4. 可以点击重试
+5. 可以给各类检查结果贴上标签
+6. 可以展示大文本，用于描述检查项更具体的信息
+
+
+但是，上面的这么多功能，目前的checks插件里面没有使用起来，官方只是在上面这个截图上演示一下而已，实际的代码中，很多功能都没被用上
