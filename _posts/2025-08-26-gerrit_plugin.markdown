@@ -94,3 +94,25 @@ checks插件是官方提供的前后端都一起剩下的插件，理解了这�
 
 
 但是，上面的这么多功能，目前的checks插件里面没有使用起来，官方只是在上面这个截图上演示一下而已，实际的代码中，很多功能都没被用上
+
+# 从fetcher.ts谈起
+
+为什么从这个文件谈起呢，应为就是这个文件控制着checks面板的页面显示样式
+
+看代码，如下，导入了@gerritcodereview里面的各类包
+
+```
+import {PluginApi} from '@gerritcodereview/typescript-api/plugin';
+import {RestPluginApi} from '@gerritcodereview/typescript-api/rest';
+import {
+  Category,
+  ChangeData,
+  CheckRun,
+  ChecksProvider,
+  LinkIcon,
+  ResponseCode,
+  RunStatus,
+} from '@gerritcodereview/typescript-api/checks';
+```
+
+这些包的具体位置，是在编译后的`plugins/node_modules/`目录里面，
