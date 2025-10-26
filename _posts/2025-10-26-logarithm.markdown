@@ -1,7 +1,7 @@
 ---
 categories: blog
 date: '2025-10-26 08:08:18'
-description: 生活中的一些可以用对数/指数解释的现象
+description: 生活中的一些符合对数/指数特征的现象
 layout: post
 published: True
 title: "世界是对数/指数的"
