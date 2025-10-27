@@ -3,7 +3,7 @@ categories: blog
 date: '2025-10-26 13:08:18'
 description: 一些关于项目中多仓库管理技术点的思考
 layout: post
-published: False
+published: True
 title: "多仓库管理"
 tags: devops
 ---
@@ -141,3 +141,93 @@ world团队使用这个manifest下载时使用命令`repo init -u <manifest_url>
 ```
 
 这样，project/build的代码就从review2.source.android.com地址下载，其他仓库就从review.source.android.com下载
+
+## 总结
+
+可见，使用manifest可以非常灵活地管理各个仓库，如果某个仓库有更新，直接更改manifest里面的仓库的revision就可以实现了，
+
+缺点就是需要用户额外学习manifest的使用和配置了，并且manifest也是存放在一个git仓库里面的，所以这个manifest的git仓库也需要额外管理
+
+
+# git submodule
+
+子模块是内嵌入git的，相关配置都是在git仓库的.gitmodules文件里面，如下所示
+
+```
+[submodule "libfoo"]
+  path = src/libfoo
+  url = https://github.com/example/libfoo.git
+  branch = dev
+
+[submodule "utils"]
+  path = src/utils
+  url = ../utils-repo.git  # 相对路径
+  branch = release
+```
+
+子模块存储在git里面的只能是hash，所以每次子模块存在更新换了新的hash时，都要在git中下载子模块然后做个提交
+
+好处是不需要用户额外学习安装repo，只需要记住几个常用的git submodule命令即可
+
+
+## 公共模块更新
+
+当一个公共的仓库有更新时，就需要让所有的包含这个公共仓库的仓库，去进行更新，比较麻烦
+
+比如，hello仓库和world仓库都需要build仓库，那么在hello仓库和world仓库的.gitmodules文件里面都写上如下内容
+
+```
+[submodule "build"]
+  path = project/build
+  url = git@review.source.android.com/project/build
+  branch = master
+```
+
+当build仓库有更新的时候，就要把hello仓库和world仓库的子模块build都去更新一下hash，
+
+1. repo manifest只需要修改xml文件里面仓库的revision为目标hash
+2. git submodule需要下载submodule的代码并且checkout到目标hash然后提交，仓库越大耗时越长
+
+
+## 模拟repo manifest
+
+假设，有个git仓库叫manifest，里面的.gitmodules内容如下
+
+```
+[submodule "build"]
+  path = project/build
+  url = git@review.source.android.com/project/build
+  branch = master
+[submodule "test"]
+  path = project/test
+  url = git@review.source.android.com/project/test
+  branch = master
+[submodule "hello"]
+  path = project/hello
+  url = git@review.source.android.com/project/hello
+  branch = master
+```
+
+这样这个仓库连带submodule下载完，其实代码格局和repo manifest是十分相似的，但是
+
+1.repo manifest中的revision可以直接看出仓库的hash节点，所以在交付源码时，直接发送一个revision是固定hash的xml即可
+2.git submodule中的.gitmodules显示仓库的hash节点，必须把仓库下载到对应hash然后才能查看各个submodule的hash，比较麻烦
+
+**个人感觉**这种模拟的效果是不如repo manifest的
+
+
+## 总结
+
+对于一些简单的仓库依赖场景，比如各个仓库呈现层数不高的树状依赖，就可以使用git submodule来简化操作,如下所示
+
+```
+     build
+     /  \
+hello    world
+
+    test
+    /  \
+hello   world
+```
+
+如果是大型项目，存在上百个仓库，十几个开发团队协作，并且存在仓库之间的相互依赖，比如Android项目，还是推荐使用repo manifest管理
